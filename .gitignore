@@ -1,6 +1,4 @@
-# --- Data (regenerable from raw + scripts/1_preprocess.py; also privacy/ToS-sensitive) ---
-data/raw/*
-!data/raw/.gitkeep
+# --- Data (regenerable from raw + scripts/1_preprocess.py) ---
 data/processed/*
 !data/processed/.gitkeep
 
