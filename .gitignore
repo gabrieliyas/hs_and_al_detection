@@ -1,0 +1,27 @@
+# --- Data (regenerable from raw + scripts/1_preprocess.py; also privacy/ToS-sensitive) ---
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# --- Model checkpoints (large binaries; regenerable via training scripts) ---
+models/**/*.pt
+models/**/*.pkl
+models/**/*.bin
+models/**/*.safetensors
+
+# --- Raw per-fold / per-seed prediction dumps (regenerable via scripts/6_evaluate.py) ---
+results/raw/*
+!results/raw/.gitkeep
+
+# --- Python ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.venv/
+*.egg-info/
+
+# --- OS / editor ---
+.DS_Store
+.vscode/

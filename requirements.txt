@@ -1,0 +1,19 @@
+# Core
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+
+# Modelling
+torch>=2.1
+transformers>=4.35
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.13
+
+# Notebooks (VS Code Jupyter extension / local exploration)
+jupyter>=1.0
+ipykernel>=6.25
+
+# Reproducibility / stats
+scipy>=1.11
