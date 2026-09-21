@@ -41,6 +41,26 @@ LABEL2ID = {"N": 0, "AL": 1, "HS": 2}
 ID2LABEL = {v: k for k, v in LABEL2ID.items()}
 
 
+def compute_class_weights(train_labels, label2id: dict = LABEL2ID) -> dict:
+    """
+    Compute 'balanced' class weights from a TRAINING partition's labels
+    ONLY -- never from the full pre-split dataset. See
+    dataset_split_and_weighting.md for the full reasoning and worked
+    example on the Ibrohim & Budi dataset.
+
+    Formula: w_c = n_train / (n_classes * count_c)
+
+    Returns a dict keyed by integer label id (via label2id), in id order,
+    ready to convert to a tensor for torch.nn.CrossEntropyLoss(weight=...).
+    """
+    counts = pd.Series(train_labels).value_counts()
+    n_train = len(train_labels)
+    n_classes = len(label2id)
+    weights_by_name = {c: n_train / (n_classes * cnt) for c, cnt in counts.items()}
+    weights_by_id = {label2id[name]: w for name, w in weights_by_name.items()}
+    return dict(sorted(weights_by_id.items()))
+
+
 # ---------------------------------------------------------------------------
 # 1. Experiment ID registry
 # ---------------------------------------------------------------------------
