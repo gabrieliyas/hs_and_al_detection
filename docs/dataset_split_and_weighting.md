@@ -133,6 +133,29 @@ loss_fn = torch.nn.CrossEntropyLoss(weight=weight_tensor)
 
 ## 2. Custom contextual dataset (Experiments II and III)
 
+### 2.0 Raw label spelling -- normalized at load time, not a data change
+
+The annotated export spells the `label` column out in full (`neither`,
+`abusive_language`, `hate_speech`), rather than using the short codes
+(`N`/`AL`/`HS`) used everywhere else in this pipeline, including Experiment
+I's own cleaned dataset, `LABEL2ID`, and every other decision in this
+document. `2_preprocess_contextual.py` maps the raw spelling onto the
+canonical codes once, immediately after loading the raw file and before any
+validation or distribution check runs (`experiment_utils.RAW_CTX_LABEL_MAP`).
+This is an ingestion-normalization step, not a reinterpretation of the
+data: the underlying `HS`/`AL` 0/1 indicator columns are untouched, and the
+original spelling is retained as an additional `label_raw` column in the
+processed output for traceability -- it is analysis-only and is excluded
+from the model input by `load_modelling_view()`, the same way as the other
+non-modelling columns.
+
+The short codes (`N`/`AL`/`HS`) were kept as the canonical vocabulary,
+rather than adopting the raw dataset's spelling as canonical, because that
+vocabulary is already load-bearing across Experiment I's own cleaned
+dataset, `LABEL2ID`/`ID2LABEL`, and the rest of this document; changing it
+would require re-touching and re-verifying that already-tested pipeline for
+no methodological benefit.
+
 ### 2.1 No weighted loss needed
 
 **Decision: do not apply class weighting to the custom contextual
@@ -150,27 +173,27 @@ on top of an already-balanced set. Weighted loss is an Experiment I
 ### 2.2 Splitting strategy: stratified k-fold, not a fixed train/val/test split
 
 **Decision: 5-fold stratified cross-validation on the matched 4-parent
-subset (parent_count_available == 4, 900 examples), stratified by
+subset (context_size_available == 4, 900 examples), stratified by
 (context_needed, label).** A single fixed split was rejected earlier in
 favor of k-fold specifically because of this subset's small size relative
 to the number of comparisons it needs to support (see prior discussion on
 statistical power for the C0-C4 ablation and the context-needed / label
 subgroup analyses).
 
-### 2.3 `parent_count_available` and fold leakage -- resolved by construction, not by adding a stratification variable
+### 2.3 `context_size_available` and fold leakage -- resolved by construction, not by adding a stratification variable
 
 This is worth stating precisely, since the risk is real but the fix is
 mechanical rather than a new stratification variable:
 
 - The C0-C4 ablation conditions are **not five separate pools of
   examples** -- they are five different *truncated views of the same 900
-  base examples* (each base example has parent_count_available == 4, and
+  base examples* (each base example has context_size_available == 4, and
   C0/C1/C2/C3/C4 are constructed by truncating how many of its parent
   messages are included).
 - Therefore, **fold assignment must happen once, at the base-example
   level, before generating the truncated views** -- a single `fold`
   column (0-4) added to `ctx_matched_subset.csv`, reused identically for
-  every C-level. `parent_count_available` itself does not need to be a
+  every C-level. `context_size_available` itself does not need to be a
   stratification variable, because it is already constant (=4) within
   this subset by construction.
 - **The actual failure mode to avoid:** running `train_test_split` or
@@ -183,7 +206,7 @@ mechanical rather than a new stratification variable:
   construction.
 - If the full 1,800-post dataset (including the parent_count 1-3 strata)
   is ever used for a broader training purpose beyond the core ablation,
-  stratifying that split by `parent_count_available` in addition to
+  stratifying that split by `context_size_available` in addition to
   `label` would become a genuinely separate, relevant decision at that
   point -- it is not currently needed for the core Experiment II/III
   design as scoped.
@@ -194,7 +217,7 @@ mechanical rather than a new stratification variable:
 from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 
-matched = pd.read_csv("data/processed/ctx_matched_subset.csv")  # 900 rows, all parent_count_available == 4
+matched = pd.read_csv("data/processed/ctx_matched_subset.csv")  # 900 rows, all context_size_available == 4
 strat_key = matched["context_needed"].astype(str) + "_" + matched["label"]
 
 skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)

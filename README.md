@@ -6,14 +6,14 @@ Indonesian X (formerly Twitter), with a focus on conversational context.
 ## Repository structure
 
 ```
-data/                         raw and processed datasets (gitignored -- see Data section)
-docs/                         methodology reference: annotation guidelines, dataset splitting/weighting decisions, experiment execution protocol
-extension/                    browser-extension demo (backend + frontend, DOM-based, no live API calls)
-models/                       trained checkpoints (gitignored -- see Data section)
-notebooks/                    exploration, preprocessing drafts, dataset statistics, experiment notes
-results/                      generated tables, figures, confusion matrices (raw predictions gitignored)
-scripts/                      finalized, reproducible pipeline scripts (preprocessing, training, evaluation)
-experiment_utils.py           experiment-ID registry, label mapping, evaluation helpers
+data/               raw and processed datasets (gitignored -- see Data section)
+docs/               methodology reference: annotation guidelines, dataset splitting/weighting decisions, experiment execution protocol
+extension/          browser-extension demo (backend + frontend, DOM-based, no live API calls)
+models/             trained checkpoints (gitignored -- see Data section)
+notebooks/          exploration, preprocessing drafts, dataset statistics, experiment notes
+results/            generated tables, figures, confusion matrices (raw predictions gitignored)
+scripts/            finalized, reproducible pipeline scripts (preprocessing, training, evaluation)
+experiment_utils.py experiment-ID registry, label mapping, evaluation helpers
 dataset_collection_targets.py per-cell annotation collection targets and progress tracker
 
 ```

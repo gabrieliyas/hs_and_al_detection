@@ -40,6 +40,78 @@ from sklearn.metrics import f1_score
 LABEL2ID = {"N": 0, "AL": 1, "HS": 2}
 ID2LABEL = {v: k for k, v in LABEL2ID.items()}
 
+# The custom contextual dataset's raw annotated export spells labels out in
+# full ("neither", "abusive_language", "hate_speech") rather than using the
+# short codes above. This is purely a raw-file vocabulary difference -- the
+# canonical codes ("N"/"AL"/"HS") stay the single source of truth used
+# everywhere else in the pipeline (including Experiment I's own
+# 1_preprocess_benchmark.py output). 2_preprocess_contextual.py maps the raw
+# spelling onto these codes once, at load time, before any validation or
+# distribution check runs.
+RAW_CTX_LABEL_MAP = {
+    "neither": "N",
+    "abusive_language": "AL",
+    "hate_speech": "HS",
+}
+
+
+# ---------------------------------------------------------------------------
+# 0.1 Custom contextual dataset -- column allowlist (single source of truth).
+#
+# Two lists, not one drop-list, because several "non-modelling" columns are
+# still needed downstream -- just never as model input:
+#   - MODELLING columns: what actually reaches the tokenizer/model.
+#   - ANALYSIS_ONLY columns: kept in the master file, joined back in by
+#     post_id at EVALUATION time (subgroup analysis, error analysis,
+#     Chapter IV descriptive tables) -- never passed to any training script.
+#
+# Every training script (Stage 8 onward) must build its model input via
+# load_modelling_view() below rather than dropping columns ad hoc. A
+# blacklist ("drop everything except the label") fails open -- a new column
+# added later would silently leak into the model. An allowlist fails safe.
+# ---------------------------------------------------------------------------
+
+CTX_ID_COLUMN = "post_id"
+
+CTX_MODELLING_COLUMNS = [
+    "parent_4", "parent_3", "parent_2", "parent_1", "target_text",
+    "context_size_available", "label",
+]
+# Added by 2_preprocess_contextual.py to the matched subset only; not part
+# of the raw schema, but a legitimate modelling-adjacent column once present
+# (used for CV split assignment, never as a model feature).
+CTX_FOLD_COLUMN = "fold"
+
+CTX_ANALYSIS_ONLY_COLUMNS = [
+    "context_needed", "HS", "AL", "target_group", "target_group_attribute",
+    "context_type", "collection_method", "keyword_used", "post_date",
+]
+
+CTX_ALL_RAW_COLUMNS = [CTX_ID_COLUMN] + CTX_MODELLING_COLUMNS + CTX_ANALYSIS_ONLY_COLUMNS
+
+
+def load_modelling_view(df: pd.DataFrame, include_fold: bool = True) -> pd.DataFrame:
+    """
+    Select ONLY the columns a training script is allowed to see, plus
+    post_id (kept for joining predictions back to analysis-only columns
+    at evaluation time, but must itself never be tokenized as a feature).
+
+    Raises if any allowlisted column is missing -- fails loud rather than
+    silently training on a partial schema.
+    """
+    wanted = [CTX_ID_COLUMN] + CTX_MODELLING_COLUMNS
+    if include_fold:
+        wanted.append(CTX_FOLD_COLUMN)
+    missing = [c for c in wanted if c not in df.columns]
+    if missing:
+        raise KeyError(
+            f"load_modelling_view: missing required column(s) {missing}. "
+            "Check that the input file is ctx_matched_subset.csv (post-"
+            "Stage-2) and that column names match CTX_MODELLING_COLUMNS "
+            "in experiment_utils.py."
+        )
+    return df[wanted].copy()
+
 
 def compute_class_weights(train_labels, label2id: dict = LABEL2ID) -> dict:
     """
@@ -104,6 +176,31 @@ def resolve_best_context_id(experiment2_scores: dict[int, float]) -> tuple[int, 
 # ---------------------------------------------------------------------------
 # 2. Evaluation helpers
 # ---------------------------------------------------------------------------
+
+def ensemble_seed_probabilities(prob_arrays: list[np.ndarray]) -> np.ndarray:
+    """
+    Average softmax probability arrays across multiple random-seed runs and
+    return the argmax as a single representative prediction set.
+
+    Use this to build the "transformer" side of a paired_bootstrap_ci call
+    against a deterministic baseline (e.g. SVM) when the transformer was
+    trained with multiple seeds -- averaging probabilities uses information
+    from every seed rather than arbitrarily picking one run's predictions.
+    Report per-seed mean +/- std (via summarize_seed_runs) separately as
+    the training-stability statistic; use this ensembled prediction set
+    specifically for the head-to-head significance test.
+
+    Args:
+        prob_arrays: list of (n_examples, n_classes) arrays, one per seed,
+            all from the same fixed test set.
+
+    Returns:
+        (n_examples,) array of predicted class ids.
+    """
+    stacked = np.stack(prob_arrays, axis=0)  # (n_seeds, n_examples, n_classes)
+    mean_probs = stacked.mean(axis=0)
+    return mean_probs.argmax(axis=1)
+
 
 def paired_bootstrap_ci(
     y_true,
@@ -177,7 +274,7 @@ def three_way_context_table(
     parent_count_col: str = "context_size_available",
 ):
     """
-    Cross-tabulate parent_count_available x (context_needed, label).
+    Cross-tabulate context_size_available x (context_needed, label).
 
     Run this:
     - Periodically during annotation (e.g. every ~200 new posts), to catch
@@ -185,7 +282,7 @@ def three_way_context_table(
       collection toward them.
     - Once on the full dataset, to confirm the overall 500/500/500 x
       context-needed distribution holds as designed.
-    - Filtered to parent_count_available == 4 only, right before Experiment
+    - Filtered to context_size_available == 4 only, right before Experiment
       II training starts -- this confirms the matched 4-parent subset used
       for the C0-C4 ablation is not skewed on context_needed x label,
       even if the full dataset looks fine.
@@ -208,6 +305,32 @@ def flag_small_cells(df, group_cols: list[str], min_count: int = 20):
     """
     counts = df.groupby(group_cols).size().reset_index(name="count")
     return counts[counts["count"] < min_count]
+
+
+def validate_label_consistency(
+    df: pd.DataFrame,
+    hs_col: str = "HS",
+    al_col: str = "AL",
+    label_col: str = "label",
+) -> None:
+    """
+    Verify that `label` is consistent with the HS-priority mapping rule
+    (HS=1 -> HS; else AL=1 -> AL; else N) applied to the HS/AL columns.
+    Raises with the offending post_id(s) if any row's stored label
+    disagrees with what the mapping rule would produce -- catches manual
+    annotation-sheet edits or copy/paste errors before they reach training.
+    """
+    expected = df.apply(
+        lambda r: "HS" if r[hs_col] == 1 else ("AL" if r[al_col] == 1 else "N"),
+        axis=1,
+    )
+    mismatches = df[expected != df[label_col]]
+    if len(mismatches):
+        ids = mismatches[CTX_ID_COLUMN].tolist() if CTX_ID_COLUMN in df.columns else mismatches.index.tolist()
+        raise ValueError(
+            f"{len(mismatches)} row(s) where `{label_col}` does not match "
+            f"the HS/AL priority mapping. Affected post_id(s): {ids}"
+        )
 
 
 def pool_out_of_fold_predictions(fold_indices: list[np.ndarray], fold_preds: list[np.ndarray]):

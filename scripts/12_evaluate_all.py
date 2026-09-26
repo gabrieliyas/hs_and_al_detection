@@ -1,5 +1,5 @@
 """
-6_evaluate.py
+12_evaluate_all.py
 
 Aggregate results, run bootstrap CI and significance tests, write results/
 
