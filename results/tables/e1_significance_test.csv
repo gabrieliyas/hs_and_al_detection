@@ -1,0 +1,2 @@
+comparison,metric,observed_diff,ci_lower,ci_upper,ci_level,n_bootstrap,significant
+E1-IndoBERTweet-Target (ensembled) - E1-SVM-TFIDF,macro_f1,0.06085089089868778,0.03837685275347623,0.08306380526980396,95.0,10000,True

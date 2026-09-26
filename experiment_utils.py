@@ -113,6 +113,39 @@ def load_modelling_view(df: pd.DataFrame, include_fold: bool = True) -> pd.DataF
     return df[wanted].copy()
 
 
+# Per docs/project_summary.md's explicit C0-C4 definitions: context size n
+# uses parent_n .. parent_1 (furthest back first, i.e. chronological order),
+# then the target. C0 is target-only. Single source of truth -- both
+# 7_timing_pilot.py and 8_train_e2_ablation.py build their input text
+# through this function, so the two can never silently disagree on how a
+# given C-level's input is constructed.
+_CONTEXT_PARENT_COLUMNS = {
+    0: [],
+    1: ["parent_1"],
+    2: ["parent_2", "parent_1"],
+    3: ["parent_3", "parent_2", "parent_1"],
+    4: ["parent_4", "parent_3", "parent_2", "parent_1"],
+}
+
+
+def build_context_text(row, context_size: int, sep: str = " [SEP] ") -> str:
+    """
+    Build the input text for a given C-level (0-4) from one row of the
+    matched contextual subset.
+
+    `sep` should be the tokenizer's own special separator token at call
+    time (e.g. f" {tokenizer.sep_token} "), not this default -- the
+    default here is a plain placeholder for callers that just want to
+    inspect the concatenated text (e.g. for a token-length pilot) without
+    loading a tokenizer.
+    """
+    if context_size not in _CONTEXT_PARENT_COLUMNS:
+        raise ValueError(f"context_size must be 0-4, got {context_size}")
+    cols = _CONTEXT_PARENT_COLUMNS[context_size]
+    pieces = [str(row[c]) for c in cols] + [str(row["target_text"])]
+    return sep.join(pieces)
+
+
 def compute_class_weights(train_labels, label2id: dict = LABEL2ID) -> dict:
     """
     Compute 'balanced' class weights from a TRAINING partition's labels
