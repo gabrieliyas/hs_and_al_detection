@@ -1,0 +1,2 @@
+selected_context,experiment2_id,corresponding_experiment3_id,selection_metric,selection_basis,selected_mean_macro_f1,selected_std_macro_f1,tie_break,n_cv_runs_per_condition
+4,E2-IndoBERTweet-ITFT-C4,E3-IndoBERTweet-C4,macro_f1,mean across 5 folds x 2 seeds,0.9193061779065956,0.035943839645443273,smaller context window if exact mean tie,10

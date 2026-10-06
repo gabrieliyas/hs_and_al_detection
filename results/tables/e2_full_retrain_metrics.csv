@@ -1,0 +1,6 @@
+condition,experiment_id,status,n_train,seed,max_length,num_epochs,train_batch_size,learning_rate,train_minutes
+0,E2-IndoBERTweet-ITFT-C0,trained,900,42,152,8,16,2e-05,0.96
+1,E2-IndoBERTweet-ITFT-C1,trained,900,42,152,8,16,2e-05,0.98
+2,E2-IndoBERTweet-ITFT-C2,trained,900,42,152,8,16,2e-05,0.95
+3,E2-IndoBERTweet-ITFT-C3,trained,900,42,152,8,16,2e-05,0.99
+4,E2-IndoBERTweet-ITFT-C4,trained,900,42,152,8,16,2e-05,0.99
