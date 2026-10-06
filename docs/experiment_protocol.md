@@ -183,7 +183,19 @@ AL: 2.5528, HS: 0.7893).
 
 ---
 
-## 5. End-to-end pipeline order (confirmed)
+## 5. Final comparison models
+
+The final browser-extension comparison uses two models trained 
+on the full 1,800-example custom contextual dataset: a target-only model 
+using C0 and a context-aware model using C_best. Both models use the same 
+final training strategy selected from Experiments II and III. 
+Experiment I models are not reused as the final target-only model 
+because Experiment I uses the separate Ibrohim & Budi benchmark dataset 
+and serves as the benchmark baseline.
+
+---
+
+## 6. End-to-end pipeline order
 
 ```
 Ibrohim & Budi (train + val)
@@ -207,11 +219,23 @@ Retrain C0-C4 once each on the FULL 900-example matched subset
         +--> Experiment III: ITFT vs. direct fine-tuning, same fold
              assignments as II-A
                 |
-        strategy + final configuration selected
+        select preferred training strategy
                 |
-        retrain final deployment model on all 1,800 posts
+        select final context configuration
                 |
-        browser extension
+        final model training on all 1,800
+                |
+                +-------------------+
+                |                   |
+               C0                C_best
+                |                   |
+                v                   v
+           target-only        context-aware
+                |                   |
+                +---------+---------+
+                          |
+                          v
+                  browser extension
 ```
 
 The final deployment model (trained on all 1,800 posts, including the

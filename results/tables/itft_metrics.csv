@@ -1,0 +1,2 @@
+seed,val_best_macro_f1,diagnostic_test_accuracy,diagnostic_test_macro_f1,train_minutes
+42,0.8505469476975378,0.8744769874476988,0.8410791351139695,7.54
