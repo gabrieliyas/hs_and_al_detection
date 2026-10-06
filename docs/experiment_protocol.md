@@ -150,8 +150,9 @@ design):
   model selection (CV) from final model production (retrain-on-all-data),
   a standard two-phase workflow; avoids the ambiguity of choosing among 5
   fold-specific models per condition; and the retrained-on-full-subset
-  checkpoint is very likely needed anyway for the browser-extension demo,
-  so the marginal cost is close to zero. Cost: 5 additional training runs
+  checkpoint models are produced solely for the availability-aware
+  generalization analysis and are not reused as the final browser-extension
+  models. Cost: 5 additional training runs
   (one per C-level) beyond the 70-run CV grid.
 - **Model identity constraint:** the model used for this analysis must be
   trained on the 900-example matched subset ONLY, never on the full

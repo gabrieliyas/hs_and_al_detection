@@ -187,23 +187,93 @@ EXPERIMENT2_IDS = {n: f"E2-IndoBERTweet-ITFT-C{n}" for n in range(5)}
 EXPERIMENT3_IDS = {n: f"E3-IndoBERTweet-C{n}" for n in range(5)}
 
 
-def resolve_best_context_id(experiment2_scores: dict[int, float]) -> tuple[int, str]:
+def resolve_best_context_id(
+    experiment2_scores: dict[int, float],
+) -> tuple[int, str, str]:
     """
-    Resolve "C_best" to a concrete context size based on Experiment II
-    ablation results.
+    Resolve the best context size from Experiment II ablation results.
 
     Args:
         experiment2_scores: mapping of context size (0-4) -> mean macro-F1
             from the Experiment II ablation (averaged across folds/seeds).
 
     Returns:
-        (best_n, experiment3_id) where experiment3_id is e.g.
-        "E3-IndoBERTweet-C3". Use this returned string everywhere
-        downstream -- never store the literal placeholder "C_best" in
-        filenames, configs, or result tables.
+        (best_n, experiment2_id, experiment3_id), where the IDs are the
+        concrete Experiment II and Experiment III identifiers for the same
+        context size. Never store the literal placeholder "C_best" as a
+        model/experiment identifier.
     """
+    if not experiment2_scores:
+        raise ValueError("experiment2_scores must not be empty")
+
+    invalid = [n for n in experiment2_scores if n not in range(5)]
+    if invalid:
+        raise ValueError(
+            f"Invalid Experiment II context size(s): {invalid}. Expected 0-4."
+        )
+
+    # max() returns the first occurrence on an exact tie. Since callers
+    # should supply context sizes in ascending order, this provides the
+    # deterministic tie-break of preferring the smaller context window.
     best_n = max(experiment2_scores, key=experiment2_scores.get)
-    return best_n, EXPERIMENT3_IDS[best_n]
+    return best_n, EXPERIMENT2_IDS[best_n], EXPERIMENT3_IDS[best_n]
+
+
+def summarize_context_cv_scores(
+    grid_df: pd.DataFrame,
+    metric: str = "macro_f1",
+) -> pd.DataFrame:
+    """
+    Summarize an Experiment II C0-C4 CV grid by context size.
+
+    The expected grid contains one row per (condition, fold, seed) run.
+    The returned table reports the mean and sample standard deviation of
+    the selected metric across all fold/seed runs for each C-level.
+
+    This function does not decide whether the grid is complete; callers
+    that require a complete 5-fold x 2-seed grid should validate that
+    separately before using the summary for model selection.
+    """
+    if "condition" not in grid_df.columns or metric not in grid_df.columns:
+        raise KeyError(
+            f"grid_df must contain `condition` and `{metric}` columns"
+        )
+
+    summary = (
+        grid_df.groupby("condition")[metric]
+        .agg(mean="mean", std=lambda x: x.std(ddof=1))
+        .reset_index()
+        .sort_values("condition")
+        .reset_index(drop=True)
+    )
+    return summary
+
+
+def select_best_context_from_cv(
+    grid_df: pd.DataFrame,
+    metric: str = "macro_f1",
+) -> tuple[int, str, str, pd.DataFrame]:
+    """
+    Select the best C-level from the Experiment II CV grid.
+
+    Selection is based only on the mean metric across the available
+    fold/seed runs. Exact ties are resolved in favour of the smaller
+    context window (lower C), giving a deterministic and more parsimonious
+    choice.
+
+    Returns:
+        (best_n, experiment2_id, experiment3_id, summary_df)
+    """
+    summary = summarize_context_cv_scores(grid_df, metric=metric)
+    if summary.empty:
+        raise ValueError("Experiment II CV grid contains no rows")
+
+    scores = {
+        int(row["condition"]): float(row["mean"])
+        for _, row in summary.iterrows()
+    }
+    best_n, e2_id, e3_id = resolve_best_context_id(scores)
+    return best_n, e2_id, e3_id, summary
 
 
 # ---------------------------------------------------------------------------
@@ -313,8 +383,9 @@ def three_way_context_table(
     - Periodically during annotation (e.g. every ~200 new posts), to catch
       under-filled combinations while there is still time to target
       collection toward them.
-    - Once on the full dataset, to confirm the overall 500/500/500 x
-      context-needed distribution holds as designed.
+    - Once on the full dataset, to confirm the overall 600/600/600
+      class-balanced label distribution and the planned context-needed
+      breakdown.
     - Filtered to context_size_available == 4 only, right before Experiment
       II training starts -- this confirms the matched 4-parent subset used
       for the C0-C4 ablation is not skewed on context_needed x label,

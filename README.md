@@ -12,8 +12,7 @@ models/                research checkpoints and final comparison models (gitigno
 results/               generated predictions, tables, figures, and matrices
 scripts/               finalized, reproducible pipeline scripts
 experiment_utils.py    experiment-ID registry, label mapping, evaluation helpers
-dataset_collection_targets.py
-                       per-cell annotation collection targets and progress tracker
+dataset_collection_targets.py per-cell annotation collection targets and progress tracker
 README.md
 requirements.txt
 ```
@@ -127,7 +126,7 @@ The finalized pipeline scripts are located in `scripts/`:
 11_train_e3_context_only.py
 12_evaluate_all.py
 13_error_analysis.py
-14_final_deployment_model.py
+14_train_final_models.py
 ```
 
 Scripts are designed to run from either a local environment or a Google Colab session after cloning the repository.

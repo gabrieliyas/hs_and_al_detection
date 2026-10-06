@@ -1,15 +1,14 @@
-# --- Data (regenerable from raw + scripts/1_preprocess.py) ---
+# --- Data (regenerable from raw + preprocessing scripts) ---
 data/processed/*
 !data/processed/.gitkeep
 
-# --- Model checkpoints (large binaries; regenerable via training scripts) ---
-models/**/*.pt
-models/**/*.pkl
-models/**/*.bin
-models/**/*.safetensors
-models/**/*.joblib
+# --- Model checkpoints and all generated model-directory contents ---
+# Model artefacts are large/regenerable and are transferred separately
+# between VS Code/Colab (Google Drive recommended).
+models/**
+!models/.gitkeep
 
-# --- Raw per-fold / per-seed prediction dumps (regenerable via scripts/6_evaluate.py) ---
+# --- Raw per-fold / per-seed prediction dumps ---
 results/raw/*
 !results/raw/.gitkeep
 
