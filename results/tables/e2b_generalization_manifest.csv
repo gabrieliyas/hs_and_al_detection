@@ -1,0 +1,6 @@
+stage,condition,experiment_id,model_path,stage9_status,stage9_seed,stage9_n_train,stage9_max_length,stage9_num_epochs,stage9_train_batch_size,stage9_learning_rate,shallow_pool_total,stage10_eligible_examples,stage10_role,selected_context_cv,c_best_source,selected_from_shallow_pool
+10-E2B,0,E2-IndoBERTweet-ITFT-C0,/content/hs_and_al_detection/models/E2_full_retrained/C0,trained,42,900,152,8,16,2e-05,900,900,generalization evaluation,4,Stage 8/9 CV mean macro-F1 only,False
+10-E2B,1,E2-IndoBERTweet-ITFT-C1,/content/hs_and_al_detection/models/E2_full_retrained/C1,trained,42,900,152,8,16,2e-05,900,900,generalization evaluation,4,Stage 8/9 CV mean macro-F1 only,False
+10-E2B,2,E2-IndoBERTweet-ITFT-C2,/content/hs_and_al_detection/models/E2_full_retrained/C2,trained,42,900,152,8,16,2e-05,900,750,generalization evaluation,4,Stage 8/9 CV mean macro-F1 only,False
+10-E2B,3,E2-IndoBERTweet-ITFT-C3,/content/hs_and_al_detection/models/E2_full_retrained/C3,trained,42,900,152,8,16,2e-05,900,450,generalization evaluation,4,Stage 8/9 CV mean macro-F1 only,False
+10-E2B,4,E2-IndoBERTweet-ITFT-C4,/content/hs_and_al_detection/models/E2_full_retrained/C4,trained,42,900,152,8,16,2e-05,900,0,not applicable: no external C4 population,4,Stage 8/9 CV mean macro-F1 only,False

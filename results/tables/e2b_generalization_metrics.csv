@@ -1,0 +1,6 @@
+condition,experiment_id,status,population,population_rule,n_examples,accuracy,macro_f1,weighted_f1,inference_seconds,inference_minutes,is_c_best,selected_from_shallow_pool
+0,E2-IndoBERTweet-ITFT-C0,evaluated,shallow_pool,"all shallow posts (context_size_available in {1,2,3})",900,0.8333333333333334,0.8336182932324547,0.8336182932324547,8.276922464370728,0.13794870773951212,False,False
+1,E2-IndoBERTweet-ITFT-C1,evaluated,shallow_pool,"all shallow posts (context_size_available in {1,2,3})",900,0.81,0.8102141497815651,0.8102141497815651,6.782535552978516,0.11304225921630859,False,False
+2,E2-IndoBERTweet-ITFT-C2,evaluated,shallow_pool,shallow posts with context_size_available >= 2,750,0.7906666666666666,0.7912529473527413,0.7912529473527414,5.695748329162598,0.09492913881937663,False,False
+3,E2-IndoBERTweet-ITFT-C3,evaluated,shallow_pool,shallow posts with context_size_available >= 3,450,0.8288888888888889,0.8294600002986724,0.8294600002986724,3.410214900970459,0.056836915016174314,False,False
+4,E2-IndoBERTweet-ITFT-C4,not_applicable,shallow_pool,no external C4 population: shallow pool excludes context_size_available==4,0,,,,,,True,False
