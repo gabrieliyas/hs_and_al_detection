@@ -1,252 +1,235 @@
-"""
-2_preprocess_contextual.py
+"""Stage 2: validate and prepare the custom 1,800-post contextual dataset.
 
-Stage 2: preprocess the custom contextual dataset for Experiments II and III.
+This is intentionally not the benchmark cleaning pipeline. It does not remove
+short target posts, deduplicate silently, or strip URLs/mentions. The source
+CSV must satisfy the confirmed annotation/collection assumptions exactly.
 
-This is deliberately NOT the benchmark cleaning pipeline (see
-1_preprocess_benchmark.py). The custom dataset was collected and annotated
-differently, so different assumptions hold:
-  - No deduplication: already checked (manually, in Excel) to have no
-    duplicate target posts.
-  - No short-text removal: a 2-3 word target post is a meaningful, deliberate
-    case, not noise -- it is often exactly the situation where conversational
-    context is doing the work. Removing it would strip out part of the
-    dataset's core contribution.
-  - No blind URL/mention stripping: the dataset was collected and
-    anonymized as part of annotation, not scraped via keyword search the
-    way the benchmark was.
-
-What this script DOES do:
-  1. Validate the raw file has every expected column (fails loud, not
-     silently, on a schema mismatch).
-  2. Verify label == f(HS, AL) via the priority mapping rule.
-  3. Verify no duplicate target_text (should be zero; raises if not, since
-     that would contradict the stated collection process rather than being
-     an expected cleaning step).
-  4. Hard-check total counts and the context_needed x label distribution
-     against the confirmed final collection numbers.
-  5. Split into the 900-example matched subset (context_size_available==4)
-     and the 900-example shallow pool (context_size_available in {1,2,3}).
-  6. Assign the shared 5-fold column to the matched subset only (per
-     docs/dataset_split_and_weighting.md Section 2.4).
-  7. Shuffle all saved files (seeded) -- the raw collection order is
-     systematic (by parent count / label), not random.
-
-Usage:
+Run from the repository root or from any working directory:
     python scripts/2_preprocess_contextual.py
 
-Input:
-    data/raw/contextual_dataset.csv
+Canonical outputs (created only when absent):
+    data/processed/ctx_cleaned.csv
+    data/processed/ctx_matched_subset.csv
+    data/processed/ctx_shallow_pool.csv
+    results/tables/left_truncation_v2/ctx_distribution.csv
+    results/runs/left_truncation_v2/stage_02/_run_manifest.json
 
-Outputs:
-    data/processed/ctx_cleaned.csv          -- full 1,800-row dataset, all columns
-    data/processed/ctx_matched_subset.csv   -- 900 rows, context_size_available==4, includes `fold`
-    data/processed/ctx_shallow_pool.csv     -- 900 rows, context_size_available in {1,2,3}
-    results/tables/ctx_distribution.csv     -- three-way distribution table
+The run manifest fingerprints this script, experiment_utils.py, the protocol,
+the pipeline table, the raw source CSV, and all four output files. Stage 2
+refuses to overwrite existing outputs or reuse an old stage manifest.
 """
 
 from __future__ import annotations
 
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from experiment_utils import (  # noqa: E402
-    CTX_ALL_RAW_COLUMNS,
-    CTX_ID_COLUMN,
-    RAW_CTX_LABEL_MAP,
-    three_way_context_table,
-    validate_label_consistency,
-)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-RAW_PATH = Path("data/raw/contextual_dataset.csv")
-OUT_DIR = Path("data/processed")
-RESULTS_DIR = Path("results/tables")
-SHUFFLE_SEED = 42
+import experiment_utils as eu  # noqa: E402
 
-# Confirmed final collection numbers (see README.md). Hard checks: if the
-# real file doesn't match these, something changed since collection was
-# reported complete, and that needs investigating before proceeding --
-# not silently absorbing a different dataset.
-EXPECTED_TOTAL = 1800
-EXPECTED_LABEL_TOTALS = {"N": 600, "AL": 600, "HS": 600}
-EXPECTED_CONTEXT_NEEDED_CELLS = {
-    # (context_needed, label): count
-    (1, "N"): 180, (1, "AL"): 300, (1, "HS"): 365,
-    (0, "N"): 420, (0, "AL"): 300, (0, "HS"): 235,
+RAW_PATH = PROJECT_ROOT / "data/raw/contextual_dataset.csv"
+OUT_DIR = PROJECT_ROOT / "data/processed"
+TABLE_DIR = PROJECT_ROOT / "results/tables" / eu.RUN_ID
+STAGE_RUN_DIR = eu.versioned_run_root(PROJECT_ROOT) / "stage_02"
+
+OUTPUT_PATHS = {
+    "data/processed/ctx_cleaned.csv": OUT_DIR / "ctx_cleaned.csv",
+    "data/processed/ctx_matched_subset.csv": OUT_DIR / "ctx_matched_subset.csv",
+    "data/processed/ctx_shallow_pool.csv": OUT_DIR / "ctx_shallow_pool.csv",
+    f"results/tables/{eu.RUN_ID}/ctx_distribution.csv": TABLE_DIR / "ctx_distribution.csv",
 }
 
 
-def shuffle_dataset(df: pd.DataFrame, random_state: int = SHUFFLE_SEED) -> pd.DataFrame:
-    """Shuffle row order (seeded) -- removes the systematic collection
-    order (by parent count / label) before saving. post_id is preserved
-    as a column, so original order is always recoverable via sort."""
-    return df.sample(frac=1, random_state=random_state).reset_index(drop=True)
+def _normalise_raw_labels(df: pd.DataFrame) -> pd.DataFrame:
+    """Map annotated full label names to canonical N/AL/HS without losing provenance."""
+    out = df.copy()
+    out["label_raw"] = out["label"].astype(str)
+    normalized = out["label_raw"].str.strip().str.casefold()
+    out["label"] = normalized.map(eu.RAW_CTX_LABEL_MAP)
+    unmapped = out["label"].isna()
+    if unmapped.any():
+        bad_values = sorted(normalized[unmapped].unique().tolist())
+        raise ValueError(
+            "Contextual CSV contains labels outside the expected raw vocabulary "
+            f"{sorted(eu.RAW_CTX_LABEL_MAP)}: {bad_values}"
+        )
+    return out
+
+
+def _ensure_fresh_outputs() -> None:
+    """Refuse to overwrite historical or unmanifested preprocessing outputs."""
+    existing = [str(path.relative_to(PROJECT_ROOT)) for path in OUTPUT_PATHS.values() if path.exists()]
+    if existing:
+        raise FileExistsError(
+            "Stage 2 will not overwrite existing files. Archive historical files before the clean rerun: "
+            + ", ".join(existing)
+        )
+    if STAGE_RUN_DIR.exists():
+        raise FileExistsError(
+            f"Stage 2 run directory already exists: {STAGE_RUN_DIR}. Archive the old stage directory "
+            "rather than deleting or reusing its manifest."
+        )
+
+
+def _assign_shared_folds(matched: pd.DataFrame) -> pd.DataFrame:
+    """Assign folds once in stable post_id order, stratified by context_need × label."""
+    result = matched.sort_values(eu.CTX_ID_COLUMN, key=lambda col: col.astype(str), kind="mergesort").copy()
+    result = result.reset_index(drop=True)
+    strat_key = result["context_needed"].astype(int).astype(str) + "_" + result["label"].astype(str)
+    splitter = StratifiedKFold(
+        n_splits=eu.CONTEXT_N_SPLITS,
+        shuffle=True,
+        random_state=eu.CONTEXT_FOLD_SEED,
+    )
+    folds = pd.Series(-1, index=result.index, dtype="int64")
+    for fold_id, (_, heldout_indices) in enumerate(splitter.split(result, strat_key)):
+        folds.iloc[heldout_indices] = fold_id
+    if (folds == -1).any():
+        raise AssertionError("Fold assignment failed: at least one matched post has no fold")
+    result[eu.CTX_FOLD_COLUMN] = folds.astype(int)
+    return result
 
 
 def main() -> None:
-    if not RAW_PATH.exists():
+    if not RAW_PATH.is_file():
         raise FileNotFoundError(
-            f"Raw contextual dataset not found at {RAW_PATH}. Export the "
-            "final annotated spreadsheet to CSV and place it there."
+            f"Raw contextual dataset not found: {RAW_PATH}. Export the finalized annotated dataset to CSV first."
         )
 
+    _ensure_fresh_outputs()
+    raw_sha256 = eu.sha256_file(RAW_PATH)
     df = pd.read_csv(RAW_PATH)
-    print(f"[1/8] Raw rows loaded: {len(df)}")
+    print(f"[1/8] Loaded {len(df):,} raw contextual rows.")
 
-    # --- Step 1: schema validation (allowlist-driven) ---
-    missing = [c for c in CTX_ALL_RAW_COLUMNS if c not in df.columns]
+    missing = sorted(set(eu.CTX_ALL_RAW_COLUMNS) - set(df.columns))
     if missing:
         raise KeyError(
-            f"Raw file is missing expected column(s): {missing}.\n"
-            f"Expected schema (see experiment_utils.CTX_ALL_RAW_COLUMNS):\n"
-            f"  {CTX_ALL_RAW_COLUMNS}\n"
-            "Check the CSV's header row, or update CTX_MODELLING_COLUMNS / "
-            "CTX_ANALYSIS_ONLY_COLUMNS in experiment_utils.py if the real "
-            "column names differ from what was assumed here."
+            f"Raw contextual CSV is missing required columns: {missing}. "
+            "Compare the CSV header with CTX_ALL_RAW_COLUMNS in experiment_utils.py."
         )
-    extra = [c for c in df.columns if c not in CTX_ALL_RAW_COLUMNS]
+    extra = sorted(set(df.columns) - set(eu.CTX_ALL_RAW_COLUMNS))
     if extra:
-        print(f"  Note: {len(extra)} column(s) present but not in the "
-              f"expected schema (kept, unused): {extra}")
-    print("[2/8] Schema validated -- all expected columns present.")
+        print(f"  Note: preserving {len(extra)} extra source column(s) for traceability: {extra}")
+    print("[2/8] Required schema columns are present.")
 
-    # --- Step 1b: normalize raw label spelling to the canonical N/AL/HS codes ---
-    # The annotated export spells labels out in full ("neither",
-    # "abusive_language", "hate_speech") rather than using the short codes
-    # used everywhere else in this pipeline (LABEL2ID, Experiment I's own
-    # cleaned dataset, all docs). This is an ingestion-normalization step,
-    # not a change to the underlying data: the HS/AL 0/1 indicator columns
-    # are untouched, and the original spelling is kept as `label_raw` for
-    # traceability. Fails loud on any value outside the expected vocabulary,
-    # rather than silently producing NaN that would confuse the checks below.
-    df["label_raw"] = df["label"]
-    df["label"] = df["label"].map(RAW_CTX_LABEL_MAP)
-    unmapped = df[df["label"].isna()]
-    if len(unmapped):
-        bad_values = sorted(unmapped["label_raw"].astype(str).unique())
+    df = _normalise_raw_labels(df)
+    source_audit = eu.validate_context_source_dataset(df)
+    print("[3/8] Contextual source validation passed: IDs, labels, parent availability, duplicates and distributions.")
+
+    matched = df.loc[pd.to_numeric(df["context_size_available"], errors="coerce") == 4].copy()
+    shallow = df.loc[pd.to_numeric(df["context_size_available"], errors="coerce").isin([1, 2, 3])].copy()
+    if len(matched) != eu.CONTEXT_MATCHED_EXPECTED_ROWS or len(shallow) != eu.CONTEXT_SHALLOW_EXPECTED_ROWS:
         raise ValueError(
-            f"{len(unmapped)} row(s) have a `label` value outside the "
-            f"expected raw vocabulary {sorted(RAW_CTX_LABEL_MAP)}. "
-            f"Unexpected value(s): {bad_values}. Check for typos in the "
-            "annotated export, or update RAW_CTX_LABEL_MAP in "
-            "experiment_utils.py if the raw spelling has changed."
+            "Expected a disjoint 900/900 matched/shallow split; "
+            f"got matched={len(matched)} and shallow={len(shallow)}"
         )
-    print(
-        "[2b/8] Label spelling normalized to canonical codes ("
-        + ", ".join(f"{k}->{v}" for k, v in RAW_CTX_LABEL_MAP.items())
-        + "); original spelling kept as `label_raw`."
-    )
+    matched_ids = set(matched[eu.CTX_ID_COLUMN].astype(str))
+    shallow_ids = set(shallow[eu.CTX_ID_COLUMN].astype(str))
+    if matched_ids & shallow_ids:
+        raise ValueError("Matched subset and shallow pool overlap by post_id")
+    if matched_ids | shallow_ids != set(df[eu.CTX_ID_COLUMN].astype(str)):
+        raise ValueError("Matched subset and shallow pool do not cover all source post IDs")
 
-    # --- Step 2: label consistency check ---
-    validate_label_consistency(df)
-    print("[3/8] Label consistency check passed (label == f(HS, AL) for all rows).")
+    matched = _assign_shared_folds(matched)
+    matched_audit = eu.validate_context_dataset(matched)
+    shallow_audit = eu.validate_context_shallow_pool(shallow)
+    print("[4/8] Matched/shallow partitions validated; stable shared five-fold assignment verified.")
+    print(f"       Matched fold counts: {matched_audit['fold_counts']}")
+    print(f"       Shallow availability counts: {shallow_audit['context_size_available_counts']}")
 
-    # --- Step 3: duplicate check (should be zero; not a cleaning step) ---
-    n_dupes = df.duplicated(subset="target_text").sum()
-    if n_dupes > 0:
-        raise ValueError(
-            f"Found {n_dupes} duplicate target_text value(s), but the "
-            "dataset was expected to have none (per manual Excel check). "
-            "Investigate before proceeding -- do not silently deduplicate, "
-            "since that would change which posts are in the dataset "
-            "without a documented reason."
+    # Stable presentation order is not used for fold generation; post_id and fold
+    # remain intact so the fixed assignment is identical across later contexts.
+    cleaned_saved = df.sample(frac=1, random_state=eu.CONTEXT_SHUFFLE_SEED).reset_index(drop=True)
+    matched_saved = matched.sample(frac=1, random_state=eu.CONTEXT_SHUFFLE_SEED).reset_index(drop=True)
+    shallow_saved = shallow.sample(frac=1, random_state=eu.CONTEXT_SHUFFLE_SEED).reset_index(drop=True)
+    distribution = eu.three_way_context_table(df)
+    outputs = {
+        "data/processed/ctx_cleaned.csv": (cleaned_saved, False),
+        "data/processed/ctx_matched_subset.csv": (matched_saved, False),
+        "data/processed/ctx_shallow_pool.csv": (shallow_saved, False),
+        f"results/tables/{eu.RUN_ID}/ctx_distribution.csv": (distribution, True),
+    }
+
+    for destination in OUTPUT_PATHS.values():
+        destination.parent.mkdir(parents=True, exist_ok=True)
+
+    # Prepare byte-identical temporary outputs first so the immutable manifest
+    # includes the digest of every final output before anything is published.
+    with tempfile.TemporaryDirectory(prefix=".stage2-contextual-", dir=PROJECT_ROOT) as temp_name:
+        temp_dir = Path(temp_name)
+        output_hashes: dict[str, str] = {}
+        temp_outputs: dict[str, Path] = {}
+        for relative_path, (frame, include_index) in outputs.items():
+            temp_path = temp_dir / Path(relative_path).name
+            frame.to_csv(temp_path, index=include_index)
+            output_hashes[relative_path] = eu.sha256_file(temp_path)
+            temp_outputs[relative_path] = temp_path
+
+        config = {
+            "schema_version": eu.CONFIG_SCHEMA_VERSION,
+            "run_id": eu.RUN_ID,
+            "stage": 2,
+            "script_name": eu.PIPELINE_SCRIPTS[2],
+            "dataset_sha256": raw_sha256,
+            "n_rows_raw": len(df),
+            "post_id_sha256": source_audit["post_id_sha256"],
+            "matched_post_id_sha256": matched_audit["post_id_sha256"],
+            "fold_assignment_sha256": matched_audit["fold_assignment_sha256"],
+            "shallow_post_id_sha256": shallow_audit["post_id_sha256"],
+            "fold_seed": eu.CONTEXT_FOLD_SEED,
+            "shuffle_seed": eu.CONTEXT_SHUFFLE_SEED,
+            "n_splits": eu.CONTEXT_N_SPLITS,
+            "stratification_columns": ["context_needed", "label"],
+            "raw_label_map": eu.RAW_CTX_LABEL_MAP,
+        }
+        metadata = {
+            "source_audit": source_audit,
+            "matched_audit": matched_audit,
+            "shallow_audit": shallow_audit,
+            "partition_disjoint": True,
+            "output_sha256": output_hashes,
+            "output_rows": {
+                "data/processed/ctx_cleaned.csv": len(cleaned_saved),
+                "data/processed/ctx_matched_subset.csv": len(matched_saved),
+                "data/processed/ctx_shallow_pool.csv": len(shallow_saved),
+                f"results/tables/{eu.RUN_ID}/ctx_distribution.csv": int(distribution.shape[0]),
+            },
+        }
+        manifest = eu.make_run_manifest(
+            stage=2,
+            script_name=eu.PIPELINE_SCRIPTS[2],
+            config=config,
+            input_paths=[RAW_PATH],
+            metadata=metadata,
+            project_root=PROJECT_ROOT,
         )
-    print("[4/8] Duplicate check passed -- no duplicate target_text values.")
+        eu.prepare_run_directory(STAGE_RUN_DIR, manifest, allow_resume=False)
 
-    # --- Step 4: hard distribution checks ---
-    if len(df) != EXPECTED_TOTAL:
-        raise AssertionError(f"Total rows = {len(df)}, expected {EXPECTED_TOTAL}.")
+        # Each individual rename is atomic on the same filesystem. If the
+        # process fails partway, the next run refuses to overwrite partial
+        # outputs and the incomplete run must be archived/investigated.
+        for relative_path, temp_path in temp_outputs.items():
+            destination = OUTPUT_PATHS[relative_path]
+            if destination.exists():
+                raise FileExistsError(f"Refusing to overwrite newly appeared output: {destination}")
+            os.replace(temp_path, destination)
 
-    label_totals = df["label"].value_counts().to_dict()
-    for label, expected in EXPECTED_LABEL_TOTALS.items():
-        actual = label_totals.get(label, 0)
-        if actual != expected:
-            raise AssertionError(
-                f"Label '{label}' has {actual} rows, expected {expected}."
-            )
-
-    cell_counts = df.groupby(["context_needed", "label"]).size().to_dict()
-    mismatched_cells = []
-    for (needed, label), expected in EXPECTED_CONTEXT_NEEDED_CELLS.items():
-        actual = cell_counts.get((needed, label), 0)
-        if actual != expected:
-            mismatched_cells.append((needed, label, actual, expected))
-    if mismatched_cells:
-        detail = "\n".join(
-            f"  context_needed={n}, label={l}: got {a}, expected {e}"
-            for n, l, a, e in mismatched_cells
-        )
-        raise AssertionError(
-            f"context_needed x label distribution does not match the "
-            f"confirmed collection numbers:\n{detail}"
-        )
-    print("[5/8] Distribution checks passed -- matches confirmed collection numbers "
-          "(1,800 total; 600/600/600 per class; context-needed 845/955 split).")
-
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-
-    # --- Step 5: three-way distribution table (for Chapter III reporting) ---
-    dist_table = three_way_context_table(df)
-    dist_table.to_csv(RESULTS_DIR / "ctx_distribution.csv")
-    print("\nThree-way distribution (context_size_available x context_needed x label):")
-    print(dist_table.to_string())
-
-    # --- Step 6: split into matched subset and shallow pool ---
-    matched = df[df["context_size_available"] == 4].copy()
-    shallow = df[df["context_size_available"].isin([1, 2, 3])].copy()
-    print(f"\n[6/8] Matched subset (context_size_available==4): {len(matched)} rows "
-          f"(expected 900)")
-    print(f"       Shallow pool (context_size_available in 1-3): {len(shallow)} rows "
-          f"(expected 900)")
-    if len(matched) != 900 or len(shallow) != 900:
-        raise AssertionError(
-            "Matched subset / shallow pool sizes do not match the expected "
-            "900 / 900 split. Check context_size_available values."
-        )
-
-    # --- Step 7: shared fold assignment (matched subset only) ---
-    # Per docs/dataset_split_and_weighting.md Section 2.4: fold assignment
-    # happens once, on the 900 base examples, BEFORE any C0-C4 truncated
-    # view is constructed downstream. Stratified by (context_needed, label)
-    # jointly, since context_size_available is constant (=4) within this
-    # subset and therefore not a useful stratification variable here.
-    strat_key = matched["context_needed"].astype(str) + "_" + matched["label"]
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-    matched["fold"] = -1
-    for fold_id, (_, test_idx) in enumerate(skf.split(matched, strat_key)):
-        matched.iloc[test_idx, matched.columns.get_loc("fold")] = fold_id
-    assert (matched["fold"] == -1).sum() == 0, "Every row must receive a fold assignment."
-
-    fold_sizes = matched["fold"].value_counts().sort_index()
-    print(f"\n[7/8] Fold assignment complete. Fold sizes: {fold_sizes.to_dict()}")
-
-    # --- Step 8: shuffle and save ---
-    df_shuffled = shuffle_dataset(df)
-    matched_shuffled = shuffle_dataset(matched)
-    shallow_shuffled = shuffle_dataset(shallow)
-
-    df_shuffled.to_csv(OUT_DIR / "ctx_cleaned.csv", index=False)
-    matched_shuffled.to_csv(OUT_DIR / "ctx_matched_subset.csv", index=False)
-    shallow_shuffled.to_csv(OUT_DIR / "ctx_shallow_pool.csv", index=False)
-
-    print(f"\n[8/8] Saved (all shuffled, seed={SHUFFLE_SEED}):")
-    print(f"  data/processed/ctx_cleaned.csv        ({len(df_shuffled)} rows)")
-    print(f"  data/processed/ctx_matched_subset.csv ({len(matched_shuffled)} rows, +fold column)")
-    print(f"  data/processed/ctx_shallow_pool.csv   ({len(shallow_shuffled)} rows)")
-    print(f"  results/tables/ctx_distribution.csv")
-    print(
-        f"\nReminder: {CTX_ID_COLUMN} is preserved through the shuffle, so "
-        "original collection order is always recoverable by sorting on it. "
-        "Downstream training scripts must load data via "
-        "experiment_utils.load_modelling_view(), never raw column access, "
-        "to keep analysis-only columns (context_needed, target_group, "
-        "context_type, etc.) out of the model input."
-    )
+    verified_manifest = eu.assert_current_stage_manifest(2, PROJECT_ROOT)
+    print("[5/8] Stage 2 manifest and live input/output hashes verified.")
+    print("[6/8] Wrote validated contextual partitions:")
+    for relative_path, destination in OUTPUT_PATHS.items():
+        print(f"  {relative_path} ({destination.stat().st_size:,} bytes)")
+    print(f"[7/8] Manifest fingerprint: {verified_manifest['fingerprint']}")
+    print(f"[8/8] Stage 2 completed. Run ID: {eu.RUN_ID}")
+    print("Reminder: downstream scripts must use load_modelling_view(); analysis-only columns must not reach tokenization.")
 
 
 if __name__ == "__main__":

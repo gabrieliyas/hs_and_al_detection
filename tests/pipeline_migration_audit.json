@@ -1,0 +1,63 @@
+{
+  "complete": false,
+  "required_scripts": [
+    "11_select_backbone.py",
+    "12_train_e2_retrain_full.py",
+    "13_e2b_generalization.py",
+    "14_train_e3_direct.py",
+    "15_evaluate_all.py",
+    "16_error_analysis.py",
+    "17_train_final_models.py",
+    "1_preprocess_benchmark.py",
+    "1b_select_benchmark_max_length.py",
+    "20_test_extension_e2e.py",
+    "2_preprocess_contextual.py",
+    "3_train_e1_indobertweet.py",
+    "4_train_e1_xlmr.py",
+    "5_evaluate_e1.py",
+    "6_train_itft.py",
+    "8_timing_pilot.py",
+    "9_train_e2_ablation.py",
+    "preflight_tune_benchmark_lr.py"
+  ],
+  "present": [
+    "1_preprocess_benchmark.py"
+  ],
+  "missing": [
+    "11_select_backbone.py",
+    "12_train_e2_retrain_full.py",
+    "13_e2b_generalization.py",
+    "14_train_e3_direct.py",
+    "15_evaluate_all.py",
+    "16_error_analysis.py",
+    "17_train_final_models.py",
+    "1b_select_benchmark_max_length.py",
+    "20_test_extension_e2e.py",
+    "2_preprocess_contextual.py",
+    "3_train_e1_indobertweet.py",
+    "4_train_e1_xlmr.py",
+    "5_evaluate_e1.py",
+    "6_train_itft.py",
+    "8_timing_pilot.py",
+    "9_train_e2_ablation.py",
+    "preflight_tune_benchmark_lr.py"
+  ],
+  "required_directories": {
+    "18": "extension/backend",
+    "19": "extension/frontend"
+  },
+  "present_directories": {},
+  "missing_directories": {
+    "18": "extension/backend",
+    "19": "extension/frontend"
+  },
+  "rename_leftovers": {
+    "4_train_e1_indobertweet.py": "3_train_e1_indobertweet.py",
+    "8_train_e2_ablation.py": "9_train_e2_ablation.py",
+    "9_train_e2_retrain_full.py": "12_train_e2_retrain_full.py",
+    "10_e2b_generalization.py": "13_e2b_generalization.py",
+    "11_train_e3_context_only.py": "14_train_e3_direct.py"
+  },
+  "optional_legacy_scripts": [],
+  "run_id": "left_truncation_v2"
+}

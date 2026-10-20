@@ -1,0 +1,3 @@
+stage,condition,experiment_id,training_strategy,base_model,matched_subset_examples,fold_count,seeds,n_runs,max_length,num_epochs,train_batch_size,eval_batch_size,learning_rate,weight_decay,held_out_examples_per_fold,best_context_selected_in_stage8_9,is_c_best,checkpoint_selection_on_held_out_fold,stage11_role
+11-E3,0,E3-IndoBERTweet-C0,direct_fine_tuning_without_ITFT,indolem/indobertweet-base-uncased,900,5,"42,123",10,152,8,16,32,2e-05,0.01,180,4,False,False,direct-vs-ITFT training-strategy comparison
+11-E3,4,E3-IndoBERTweet-C4,direct_fine_tuning_without_ITFT,indolem/indobertweet-base-uncased,900,5,"42,123",10,152,8,16,32,2e-05,0.01,180,4,True,False,direct-vs-ITFT training-strategy comparison

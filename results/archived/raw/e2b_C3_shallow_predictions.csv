@@ -1,0 +1,451 @@
+post_id,context_size_available,y_true,y_pred,confidence,context_needed,target_group,target_group_attribute,context_type,collection_method,keyword_used,post_date
+828,3,HS,HS,0.99961215,1,protected_group,gender,ambiguous_reference,keyword_search,makhluk lemah,2026-08-15
+589,3,AL,AL,0.9996369,0,individual,,explicit,keyword_search,jancok,2026-08-10
+732,3,N,AL,0.6693422,1,institution_policy_idea,,opinion_attack_ambiguity,browsing,,2026-08-14
+534,3,N,N,0.9992993,0,institution_policy_idea,,explicit,browsing,,2026-07-29
+802,3,AL,AL,0.9989625,1,individual,,ambiguous_reference,keyword_search,diem aja,2026-08-12
+712,3,N,HS,0.7039075,1,individual,,opinion_attack_ambiguity,browsing,,2026-07-29
+591,3,AL,AL,0.9998592,0,individual,,explicit,keyword_search,sialan,2026-08-10
+742,3,AL,AL,0.6853813,1,individual,,opinion_attack_ambiguity,keyword_search,hoki terus,2026-08-10
+689,3,HS,HS,0.99640536,0,protected_group,ethnicity,explicit,keyword_search,dasar arab,2026-08-15
+543,3,N,N,0.99979216,0,none,,explicit,browsing,,2026-07-29
+838,3,HS,HS,0.99967825,1,protected_group,ethnicity,ambiguous_reference,keyword_search,etnis,2026-08-15
+659,3,HS,HS,0.9996635,0,protected_group,religion,explicit,keyword_search,yahudi,2026-08-15
+523,3,N,AL,0.9623312,0,none,,explicit,browsing,,2026-08-07
+757,3,AL,AL,0.99939954,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,masih ngotot,2026-08-10
+532,3,N,N,0.999759,0,institution_policy_idea,,explicit,browsing,,2026-07-29
+616,3,AL,AL,0.99962616,0,institution_policy_idea,,explicit,keyword_search,anjing lu,2026-08-10
+676,3,HS,AL,0.98879445,0,protected_group,gender,explicit,keyword_search,dasar banci,2026-08-15
+590,3,AL,AL,0.5217291,0,individual,,explicit,keyword_search,orang gini,2026-08-10
+745,3,AL,AL,0.99792224,1,individual,,opinion_attack_ambiguity,keyword_search,kehilangan arah,2026-08-10
+653,3,HS,HS,0.9995559,0,protected_group,nationality,explicit,keyword_search,usir bule,2026-08-15
+626,3,AL,AL,0.9992822,0,individual,,explicit,keyword_search,anjing lu,2026-08-10
+520,3,N,N,0.99981004,0,none,,explicit,browsing,,2026-08-07
+495,3,N,N,0.9998385,0,none,,explicit,browsing,,2026-08-07
+833,3,HS,AL,0.98036295,1,protected_group,ethnicity,ambiguous_reference,keyword_search,maling,2026-08-15
+454,3,N,N,0.9984623,0,institution_policy_idea,,explicit,browsing,,2026-08-15
+550,3,N,N,0.9998203,0,none,,explicit,browsing,,2026-07-29
+544,3,N,N,0.99982446,0,none,,explicit,browsing,,2026-07-29
+740,3,AL,AL,0.99611014,1,individual,,opinion_attack_ambiguity,keyword_search,keliatan juga,2026-08-10
+669,3,HS,HS,0.6471834,0,protected_group,ethnicity,explicit,keyword_search,anjing,2026-08-15
+517,3,N,AL,0.99181783,0,none,,explicit,browsing,,2026-08-07
+627,3,AL,AL,0.9996966,0,individual,,explicit,keyword_search,anjing lu,2026-08-10
+584,3,AL,AL,0.9997731,0,individual,,explicit,keyword_search,tolol,2026-08-10
+827,3,HS,HS,0.9995913,1,protected_group,disability,ambiguous_reference,keyword_search,disabilitas,2026-08-15
+844,3,HS,HS,0.999572,1,protected_group,race,ambiguous_reference,keyword_search,bule,2026-08-15
+494,3,N,N,0.9986665,0,none,,explicit,browsing,,2026-08-07
+665,3,HS,HS,0.9994605,0,protected_group,nationality,explicit,keyword_search,israel,2026-08-15
+526,3,N,N,0.99980384,0,none,,explicit,browsing,,2026-07-29
+537,3,N,N,0.8403559,0,none,,explicit,browsing,,2026-07-29
+821,3,HS,HS,0.9994697,1,protected_group,nationality,ambiguous_reference,keyword_search,parasit-parasit,2026-08-15
+778,3,AL,AL,0.9997464,1,individual,,opinion_attack_ambiguity,keyword_search,keliatan sendiri,2026-08-10
+486,3,N,N,0.9845115,0,none,,explicit,browsing,,2026-08-07
+576,3,AL,HS,0.9888748,0,individual,,explicit,keyword_search,anjing lu,2026-08-10
+546,3,N,N,0.99983215,0,none,,explicit,browsing,,2026-09-26
+801,3,AL,AL,0.99887747,1,institution_policy_idea,,opinion_attack_ambiguity,keyword_search,basi alasannya,2026-08-12
+810,3,AL,AL,0.9994721,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,males gini,2026-08-12
+779,3,AL,AL,0.99973184,1,individual,,ambiguous_reference,keyword_search,kejadian terus,2026-08-10
+632,3,HS,HS,0.9996493,0,protected_group,religion,explicit,keyword_search,kafir,2026-08-23
+752,3,AL,AL,0.9969669,1,individual,,ambiguous_reference,keyword_search,begini nih,2026-08-10
+571,3,AL,AL,0.9088483,0,individual,,explicit,keyword_search,anjing tolol,2026-08-10
+513,3,N,N,0.9997731,0,none,,explicit,browsing,,2026-08-07
+896,3,HS,HS,0.9996705,1,protected_group,gender,ambiguous_reference,keyword_search,lonte,2026-08-15
+670,3,HS,AL,0.50926113,0,protected_group,gender,explicit,keyword_search,perempuan,2026-08-15
+746,3,AL,AL,0.9997842,1,individual,,opinion_attack_ambiguity,keyword_search,orang males,2026-08-10
+875,3,HS,HS,0.99971205,1,protected_group,religion,ambiguous_reference,keyword_search,mayoritas,2026-08-15
+795,3,AL,AL,0.99833834,1,individual,,opinion_attack_ambiguity,keyword_search,bikin rugi,2026-08-12
+775,3,AL,AL,0.99968684,1,individual,,opinion_attack_ambiguity,keyword_search,asbun,2026-08-10
+482,3,N,N,0.9998018,0,none,,explicit,browsing,,2026-08-07
+835,3,HS,HS,0.9997067,1,protected_group,gender,ambiguous_reference,keyword_search,kaum kek gini,2026-08-15
+466,3,N,N,0.9996427,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+808,3,AL,AL,0.8977523,1,institution_policy_idea,,sarcasm_or_irony,keyword_search,mereka begini,2026-08-12
+886,3,HS,HS,0.9996642,1,protected_group,nationality,ambiguous_reference,keyword_search,ras penjajah,2026-08-15
+892,3,HS,HS,0.9997167,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,penyimpang,2026-08-15
+784,3,AL,AL,0.99971193,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,kaum dosa,2026-08-10
+830,3,HS,HS,0.9996469,1,protected_group,nationality,ambiguous_reference,keyword_search,komunis,2026-08-15
+583,3,AL,AL,0.9997191,0,individual,,explicit,keyword_search,bego,2026-08-10
+744,3,AL,AL,0.9997745,1,individual,,ambiguous_reference,keyword_search,model begini,2026-08-10
+790,3,AL,AL,0.9998073,1,individual,,opinion_attack_ambiguity,keyword_search,kalah begini,2026-08-14
+604,3,AL,AL,0.9921096,0,individual,,explicit,keyword_search,tolol lu,2026-03-06
+858,3,HS,HS,0.9994066,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,ruang bebas,2026-08-15
+487,3,N,N,0.99981004,0,none,,explicit,browsing,,2026-08-07
+658,3,HS,HS,0.98481447,0,protected_group,sexual_orientation,explicit,keyword_search,lesbi,2026-08-15
+710,3,N,AL,0.9534381,1,none,,ambiguous_reference,browsing,,2026-07-29
+895,3,HS,HS,0.9990631,1,protected_group,disability,ambiguous_reference,keyword_search,makhluk pincang,2026-08-15
+514,3,N,N,0.99955446,0,none,,explicit,browsing,,2026-08-07
+674,3,HS,HS,0.9995307,0,protected_group,ethnicity,explicit,keyword_search,india,2026-08-15
+519,3,N,N,0.9998098,0,none,,explicit,browsing,,2026-08-07
+650,3,HS,AL,0.5949947,0,protected_group,gender,explicit,keyword_search,cewek lonte,2026-08-15
+694,3,N,AL,0.99954337,1,none,,ambiguous_reference,browsing,,2026-07-29
+488,3,N,N,0.99977463,0,none,,explicit,browsing,,2026-08-07
+465,3,N,N,0.9995933,0,none,,explicit,browsing,,2026-08-15
+735,3,N,HS,0.999653,1,institution_policy_idea,,opinion_attack_ambiguity,browsing,,2026-08-14
+463,3,N,N,0.9992526,0,institution_policy_idea,,explicit,browsing,,2026-08-15
+577,3,AL,AL,0.812941,0,individual,,explicit,keyword_search,lu lonte,2026-08-10
+898,3,HS,HS,0.9997168,1,protected_group,race,ambiguous_reference,keyword_search,parasit,2026-08-15
+579,3,AL,HS,0.9982237,0,individual,,explicit,keyword_search,tolol lu,2026-08-10
+780,3,AL,AL,0.99979204,1,individual,,opinion_attack_ambiguity,keyword_search,katanya ngerti,2026-08-10
+679,3,HS,AL,0.9292268,0,protected_group,religion,explicit,keyword_search,oten,2026-08-15
+592,3,AL,AL,0.99983966,0,individual,,explicit,keyword_search,kasir gila,2026-09-25
+600,3,AL,HS,0.9965653,0,individual,,explicit,keyword_search,bloon,2026-08-10
+851,3,HS,HS,0.9996741,1,protected_group,religion,ambiguous_reference,keyword_search,sumber masalah,2026-08-15
+630,3,AL,AL,0.9995721,0,individual,,explicit,keyword_search,anjing lu,2026-08-10
+863,3,HS,HS,0.9993382,1,protected_group,ethnicity,ambiguous_reference,keyword_search,ambon,2026-08-15
+788,3,AL,AL,0.9988381,1,individual,,escalation,keyword_search,sabar bgt,2026-08-12
+570,3,AL,AL,0.999819,0,individual,,explicit,keyword_search,jir tololnya,2025-01-03
+698,3,N,N,0.9997732,1,institution_policy_idea,,sarcasm_or_irony,browsing,,2026-07-29
+715,3,N,AL,0.98507184,1,non_protected_group,,ambiguous_reference,browsing,,2026-07-29
+540,3,N,N,0.9998209,0,institution_policy_idea,,explicit,browsing,,2026-07-29
+769,3,AL,AL,0.85859025,1,individual,,opinion_attack_ambiguity,keyword_search,kerjaan begini,2026-08-10
+846,3,HS,HS,0.99968207,1,protected_group,gender,opinion_attack_ambiguity,keyword_search,feminisme,2026-08-15
+719,3,N,N,0.6574047,1,none,,ambiguous_reference,browsing,,2026-07-29
+501,3,N,N,0.9997831,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+731,3,N,N,0.99979025,1,institution_policy_idea,,opinion_attack_ambiguity,browsing,,2026-08-14
+483,3,N,N,0.9998385,0,none,,explicit,browsing,,2026-08-07
+474,3,N,N,0.9996251,0,none,,explicit,browsing,,2026-08-07
+452,3,N,N,0.9997589,0,none,,explicit,browsing,,2026-08-15
+614,3,AL,AL,0.99969566,0,individual,,explicit,keyword_search,dongo,2026-08-10
+529,3,N,N,0.9998548,0,institution_policy_idea,,explicit,browsing,,2026-07-29
+816,3,HS,HS,0.99903226,1,protected_group,race,opinion_attack_ambiguity,keyword_search,lintah darat,2026-08-15
+879,3,HS,HS,0.9994622,1,protected_group,nationality,ambiguous_reference,keyword_search,sumatra,2026-08-15
+508,3,N,N,0.9994685,0,none,,explicit,browsing,,2026-08-07
+500,3,N,N,0.9998616,0,none,,explicit,browsing,,2026-08-07
+522,3,N,AL,0.9988004,0,none,,explicit,browsing,,2026-08-07
+837,3,HS,HS,0.9996778,1,protected_group,nationality,ambiguous_reference,keyword_search,imigran,2026-08-15
+568,3,AL,AL,0.9998215,0,individual,,explicit,keyword_search,pelacur kau,2026-07-20
+527,3,N,N,0.99979657,0,none,,explicit,browsing,,2026-07-29
+894,3,HS,HS,0.99971527,1,protected_group,ethnicity,coded_language_or_euphemism,keyword_search,barbar,2026-08-15
+586,3,AL,AL,0.99474573,0,individual,,explicit,keyword_search,tai,2026-08-10
+656,3,HS,AL,0.7843866,0,protected_group,disability,explicit,keyword_search,anak cacat,2026-08-15
+660,3,HS,HS,0.99969304,0,protected_group,ethnicity,explicit,keyword_search,bali rasis,2026-08-15
+829,3,HS,HS,0.99968135,1,protected_group,religion,ambiguous_reference,keyword_search,penjajah,2026-08-15
+595,3,AL,HS,0.9890215,0,individual,,explicit,keyword_search,lu dodol,2026-08-10
+843,3,HS,HS,0.99965477,1,protected_group,nationality,ambiguous_reference,keyword_search,rohingya,2026-08-15
+484,3,N,HS,0.99911934,0,none,,explicit,browsing,,2026-09-22
+469,3,N,N,0.9996785,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+549,3,N,N,0.9997224,0,none,,explicit,browsing,,2026-07-29
+507,3,N,N,0.9998275,0,none,,explicit,browsing,,2026-08-07
+654,3,HS,HS,0.98365825,0,protected_group,nationality,explicit,keyword_search,idiot,2026-09-21
+639,3,HS,HS,0.9994863,0,protected_group,sexual_orientation,explicit,keyword_search,kaum lgbt,2026-08-15
+753,3,AL,AL,0.9979182,1,individual,,opinion_attack_ambiguity,keyword_search,dibiarkan begini,2026-08-10
+688,3,HS,HS,0.9974552,0,protected_group,religion,explicit,keyword_search,dasar pamer,2026-08-15
+706,3,N,N,0.9997695,1,none,,opinion_attack_ambiguity,browsing,,2026-07-29
+864,3,HS,HS,0.9996315,1,protected_group,religion,opinion_attack_ambiguity,keyword_search,merusak akidah,2026-08-15
+468,3,N,N,0.9989894,0,non_protected_group,,explicit,browsing,,2026-08-07
+813,3,HS,AL,0.837193,1,protected_group,sexual_orientation,other_and_mixed,keyword_search,setan,2026-08-23
+809,3,AL,AL,0.9980349,1,individual,,ambiguous_reference,keyword_search,hadeh,2026-08-12
+842,3,HS,HS,0.9996123,1,protected_group,religion,ambiguous_reference,keyword_search,biarin hancur,2026-08-15
+862,3,HS,HS,0.9996829,1,protected_group,gender,ambiguous_reference,keyword_search,laknatullah,2026-08-15
+803,3,AL,AL,0.99714774,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,males banget,2026-08-12
+599,3,AL,AL,0.9997148,0,individual,,explicit,keyword_search,kurang ajar,2026-08-10
+478,3,N,N,0.99980825,0,none,,explicit,browsing,,2026-08-07
+498,3,N,N,0.99981827,0,none,,explicit,browsing,,2026-08-07
+724,3,N,N,0.99046993,1,none,,quotation_or_counterspeech,browsing,,2026-07-29
+641,3,HS,AL,0.99131507,0,protected_group,disability,explicit,keyword_search,orang idiot,2026-08-15
+538,3,N,N,0.999358,0,institution_policy_idea,,explicit,browsing,,2026-07-29
+582,3,AL,AL,0.99869436,0,non_protected_group,,explicit,keyword_search,bangsat lu,2026-08-10
+619,3,AL,AL,0.99968505,0,institution_policy_idea,,explicit,keyword_search,sampah,2026-08-10
+887,3,HS,HS,0.9996551,1,protected_group,race,coded_language_or_euphemism,keyword_search,india,2026-08-15
+585,3,AL,AL,0.95428455,0,individual,,explicit,keyword_search,kontol,2026-08-10
+804,3,AL,AL,0.99954766,1,individual,,escalation,keyword_search,pungut duit,2026-08-12
+743,3,AL,AL,0.99978894,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,kayak gini,2026-08-10
+552,3,N,N,0.99984217,0,none,,explicit,browsing,,2026-09-26
+603,3,AL,AL,0.9997665,0,individual,,explicit,keyword_search,bego,2026-08-10
+502,3,N,N,0.99984837,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+666,3,HS,HS,0.9996432,0,protected_group,sexual_orientation,explicit,keyword_search,homo tolol,2026-08-15
+824,3,HS,HS,0.99853015,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,penyimpang,2026-08-15
+721,3,N,N,0.98595077,1,none,,opinion_attack_ambiguity,browsing,,2026-07-29
+693,3,N,HS,0.9850874,1,non_protected_group,,ambiguous_reference,browsing,,2026-07-29
+618,3,AL,AL,0.99982375,0,individual,,explicit,keyword_search,gembel,2026-08-10
+704,3,N,HS,0.9264308,1,none,,ambiguous_reference,browsing,,2026-09-21
+845,3,HS,HS,0.9996737,1,protected_group,nationality,ambiguous_reference,keyword_search,china,2026-08-15
+890,3,HS,HS,0.9996722,1,protected_group,ethnicity,ambiguous_reference,keyword_search,jateng,2026-08-15
+722,3,N,AL,0.99934417,1,none,,quotation_or_counterspeech,browsing,,2026-07-29
+559,3,AL,AL,0.7557352,0,individual,,explicit,keyword_search,cowok goblok,2026-08-10
+634,3,HS,AL,0.9963476,0,protected_group,religion,explicit,keyword_search,kafir,2026-08-23
+645,3,HS,HS,0.99964535,0,protected_group,religion,explicit,keyword_search,kafir,2026-08-15
+531,3,N,N,0.9991732,0,none,,explicit,browsing,,2026-07-29
+528,3,N,N,0.99977976,0,none,,explicit,browsing,,2026-07-29
+637,3,HS,HS,0.998719,0,protected_group,ethnicity,explicit,keyword_search,rohingya,2026-08-14
+605,3,AL,HS,0.82103145,0,individual,,explicit,keyword_search,lu bego,2026-09-17
+741,3,AL,AL,0.999151,1,individual,,sarcasm_or_irony,keyword_search,repot kalian,2026-08-10
+794,3,AL,AL,0.9994747,1,individual,,opinion_attack_ambiguity,keyword_search,babak belur,2026-08-12
+515,3,N,N,0.9998037,0,none,,explicit,browsing,,2026-08-07
+496,3,N,N,0.99981314,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+451,3,N,N,0.9998467,0,institution_policy_idea,,explicit,browsing,,2026-08-15
+798,3,AL,AL,0.99975616,1,individual,,opinion_attack_ambiguity,keyword_search,gak niat,2026-08-12
+889,3,HS,HS,0.99972385,1,protected_group,religion,ambiguous_reference,keyword_search,kolot,2026-08-15
+825,3,HS,HS,0.99964666,1,protected_group,religion,opinion_attack_ambiguity,keyword_search,radikal,2026-08-15
+836,3,HS,HS,0.9996656,1,protected_group,religion,ambiguous_reference,keyword_search,radikal,2026-08-15
+548,3,N,N,0.9997993,0,none,,explicit,browsing,,2026-07-29
+553,3,N,N,0.9997875,0,none,,explicit,browsing,,2026-07-29
+899,3,HS,HS,0.9996995,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,penyimpangan,2026-08-15
+786,3,AL,AL,0.9997677,1,individual,,opinion_attack_ambiguity,keyword_search,ngejatuhinnya,2026-08-10
+542,3,N,N,0.9998191,0,none,,explicit,browsing,,2026-07-29
+723,3,N,AL,0.93109673,1,individual,,opinion_attack_ambiguity,browsing,,2026-07-29
+849,3,HS,HS,0.99955696,1,protected_group,sexual_orientation,opinion_attack_ambiguity,keyword_search,penyimpangan,2026-08-15
+588,3,AL,AL,0.9989335,0,individual,,explicit,keyword_search,dongo,2026-09-24
+791,3,AL,AL,0.9996172,1,individual,,escalation,keyword_search,bikin kesel,2026-08-12
+598,3,AL,AL,0.9918275,0,individual,,explicit,keyword_search,bangsat lu,2016-09-22
+696,3,N,AL,0.9981932,1,none,,opinion_attack_ambiguity,browsing,,2026-07-29
+716,3,N,AL,0.95689535,1,non_protected_group,,ambiguous_reference,browsing,,2026-07-29
+718,3,N,HS,0.9994431,1,unclear,,ambiguous_reference,browsing,,2026-08-14
+717,3,N,N,0.9989874,1,none,,ambiguous_reference,browsing,,2026-07-29
+663,3,HS,HS,0.9996785,0,protected_group,ethnicity,explicit,keyword_search,cina bangsat,2026-08-15
+457,3,N,N,0.9991592,0,none,,explicit,browsing,,2026-08-15
+479,3,N,N,0.99980444,0,none,,explicit,browsing,,2026-08-07
+774,3,AL,AL,0.9985259,1,individual,,opinion_attack_ambiguity,keyword_search,bikin bingung,2026-08-10
+530,3,N,N,0.99916947,0,institution_policy_idea,,explicit,browsing,,2026-07-29
+458,3,N,N,0.99931717,0,institution_policy_idea,,explicit,browsing,,2026-08-15
+535,3,N,N,0.99983704,0,none,,explicit,browsing,,2026-07-29
+606,3,AL,AL,0.9997825,0,individual,,explicit,keyword_search,kampret,2026-08-10
+773,3,AL,AL,0.999764,1,individual,,ambiguous_reference,keyword_search,keliatan sibuk,2026-08-10
+884,3,HS,HS,0.9993216,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,mahluk najis,2026-08-15
+533,3,N,N,0.99952614,0,institution_policy_idea,,explicit,browsing,,2026-07-29
+750,3,AL,HS,0.99813145,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,dibela terus,2026-08-10
+524,3,N,N,0.9997768,0,none,,explicit,browsing,,2026-07-29
+539,3,N,N,0.99980336,0,none,,explicit,browsing,,2026-07-29
+683,3,HS,HS,0.9990231,0,protected_group,religion,explicit,keyword_search,sekte,2026-08-15
+800,3,AL,AL,0.9987142,1,non_protected_group,,ambiguous_reference,keyword_search,mas gitu,2026-08-12
+736,3,AL,AL,0.99966466,1,individual,,ambiguous_reference,keyword_search,setan,2026-08-14
+880,3,HS,HS,0.9942497,1,protected_group,disability,ambiguous_reference,keyword_search,makhluk beban,2026-08-15
+555,3,N,N,0.9997664,0,institution_policy_idea,,explicit,browsing,,2026-07-29
+569,3,AL,AL,0.9982633,0,non_protected_group,,explicit,keyword_search,belagu emang,2026-08-10
+668,3,HS,HS,0.9996245,0,protected_group,religion,explicit,keyword_search,kafir,2026-08-15
+560,3,AL,HS,0.8466115,0,individual,,explicit,keyword_search,lu babi,2026-08-10
+793,3,AL,AL,0.9418501,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,turun tangan,2026-08-12
+738,3,AL,AL,0.7720268,1,individual,,opinion_attack_ambiguity,keyword_search,repot juga,2026-08-10
+891,3,HS,HS,0.9997135,1,protected_group,religion,coded_language_or_euphemism,keyword_search,laknatullah,2026-08-15
+602,3,AL,AL,0.9993593,0,individual,,explicit,keyword_search,sialan,2026-08-10
+856,3,HS,HS,0.99931836,1,protected_group,nationality,ambiguous_reference,keyword_search,imigran,2026-08-15
+536,3,N,N,0.99985266,0,none,,explicit,browsing,,2026-07-29
+697,3,N,AL,0.9138039,1,non_protected_group,,ambiguous_reference,browsing,,2026-07-29
+814,3,HS,AL,0.99926656,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,menjijikan,2026-08-23
+661,3,HS,HS,0.99965656,0,protected_group,sexual_orientation,explicit,keyword_search,homo tolol,2026-08-15
+785,3,AL,AL,0.9941994,1,individual,,quotation_or_counterspeech,keyword_search,ngerendahin lain,2026-08-10
+631,3,HS,HS,0.9996904,0,protected_group,ethnicity,explicit,keyword_search,batak oten,2026-08-23
+714,3,N,N,0.99980444,1,none,,opinion_attack_ambiguity,browsing,,2026-07-29
+596,3,AL,AL,0.996968,0,individual,,explicit,keyword_search,bangsat,2026-08-10
+817,3,HS,HS,0.99945444,1,protected_group,sexual_orientation,opinion_attack_ambiguity,keyword_search,najis,2026-08-15
+782,3,AL,AL,0.95200413,1,non_protected_group,,ambiguous_reference,keyword_search,halah tod,2026-09-21
+629,3,AL,AL,0.99873453,0,individual,,explicit,keyword_search,anjing lu,2026-08-10
+480,3,N,N,0.9997423,0,none,,explicit,browsing,,2026-08-07
+581,3,AL,AL,0.99965787,0,individual,,explicit,keyword_search,goblok lu,2026-08-10
+900,3,HS,HS,0.9994869,1,protected_group,ethnicity,ambiguous_reference,keyword_search,pemalas,2026-08-15
+751,3,AL,N,0.99501735,1,non_protected_group,,escalation,keyword_search,kena imbasnya,2026-08-10
+876,3,HS,AL,0.96114784,1,protected_group,ethnicity,coded_language_or_euphemism,keyword_search,parasit,2026-08-15
+692,3,N,HS,0.9959329,1,non_protected_group,,ambiguous_reference,browsing,,2026-07-29
+573,3,AL,HS,0.9987921,0,non_protected_group,,explicit,keyword_search,dongok,2026-09-22
+491,3,N,N,0.9998517,0,none,,explicit,browsing,,2026-08-07
+612,3,AL,AL,0.99982893,0,individual,,explicit,keyword_search,anjing lu,2026-08-10
+807,3,AL,N,0.66516924,1,individual,,opinion_attack_ambiguity,keyword_search,kalau begini,2026-08-12
+799,3,AL,AL,0.9997775,1,individual,,opinion_attack_ambiguity,keyword_search,dianggap bercanda,2026-08-12
+868,3,HS,HS,0.9995384,1,protected_group,disability,ambiguous_reference,keyword_search,bikin malu,2026-08-15
+709,3,N,HS,0.80660933,1,individual,,quotation_or_counterspeech,browsing,,2026-07-29
+831,3,HS,HS,0.9995981,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,penyimpangan,2026-08-15
+471,3,N,AL,0.90150744,0,non_protected_group,,explicit,browsing,,2026-08-07
+852,3,HS,HS,0.9988518,1,protected_group,gender,opinion_attack_ambiguity,keyword_search,tetap keliatan,2026-08-15
+812,3,HS,HS,0.99950945,1,protected_group,race,ambiguous_reference,keyword_search,misoginis,2026-08-12
+713,3,N,HS,0.9996666,1,individual,,quotation_or_counterspeech,browsing,,2026-07-29
+729,3,N,N,0.9997588,1,non_protected_group,,opinion_attack_ambiguity,browsing,,2026-08-14
+822,3,HS,HS,0.99963117,1,protected_group,ethnicity,ambiguous_reference,keyword_search,sdm jongkok,2026-08-15
+747,3,AL,N,0.72441584,1,individual,,opinion_attack_ambiguity,keyword_search,pasaran lagi,2026-08-10
+607,3,AL,N,0.68580866,0,individual,,explicit,keyword_search,tolol,2026-09-22
+680,3,HS,HS,0.99733883,0,protected_group,ethnicity,explicit,keyword_search,papua,2026-08-15
+771,3,AL,AL,0.9995192,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,penuh sampah,2026-08-10
+545,3,N,N,0.99980146,0,none,,explicit,browsing,,2026-07-29
+597,3,AL,AL,0.9997018,0,individual,,explicit,keyword_search,dungu,2026-08-10
+866,3,HS,HS,0.99959546,1,protected_group,race,ambiguous_reference,keyword_search,pengen disingkirkan,2026-08-15
+558,3,AL,AL,0.9906639,0,individual,,explicit,keyword_search,dasar tolol,2026-08-10
+685,3,HS,AL,0.96882814,0,protected_group,nationality,explicit,keyword_search,dasar bego,2026-08-15
+644,3,HS,HS,0.9899301,0,protected_group,ethnicity,explicit,keyword_search,papua,2026-08-15
+733,3,N,AL,0.9890344,1,none,,quotation_or_counterspeech,browsing,,2026-08-15
+621,3,AL,AL,0.99950933,0,individual,,explicit,keyword_search,tolol lu,2026-08-10
+839,3,HS,HS,0.9996835,1,protected_group,race,ambiguous_reference,keyword_search,lintah darat,2026-08-15
+518,3,N,N,0.9997472,0,none,,explicit,browsing,,2026-08-07
+885,3,HS,HS,0.9996406,1,protected_group,disability,ambiguous_reference,keyword_search,makhluk cacat,2026-08-15
+815,3,HS,HS,0.99772424,1,protected_group,religion,other_and_mixed,keyword_search,rasis,2026-08-23
+671,3,HS,HS,0.9988269,0,protected_group,disability,explicit,keyword_search,cacat,2026-08-15
+512,3,N,N,0.99954563,0,none,,explicit,browsing,,2026-08-07
+883,3,HS,HS,0.99968183,1,protected_group,ethnicity,coded_language_or_euphemism,keyword_search,sdm jongkok,2026-08-15
+756,3,AL,AL,0.50637984,1,individual,,opinion_attack_ambiguity,keyword_search,orang males,2026-08-10
+516,3,N,N,0.9997452,0,none,,explicit,browsing,,2026-08-07
+622,3,AL,AL,0.9998173,0,individual,,explicit,keyword_search,anjing,2026-08-10
+481,3,N,N,0.99980754,0,none,,explicit,browsing,,2026-08-07
+594,3,AL,AL,0.99927264,0,individual,,explicit,keyword_search,asu,2026-08-10
+705,3,N,N,0.52493036,1,institution_policy_idea,,sarcasm_or_irony,browsing,,2026-07-29
+853,3,HS,HS,0.99962616,1,protected_group,religion,coded_language_or_euphemism,keyword_search,haram,2026-08-15
+867,3,HS,HS,0.99962544,1,protected_group,disability,ambiguous_reference,keyword_search,anak autis,2026-08-15
+470,3,N,N,0.99943393,0,none,,explicit,browsing,,2026-08-07
+869,3,HS,HS,0.9996699,1,protected_group,gender,ambiguous_reference,keyword_search,korban,2026-08-15
+765,3,AL,AL,0.9997799,1,individual,,ambiguous_reference,keyword_search,masih lanjut,2026-08-10
+657,3,HS,HS,0.9987583,0,protected_group,race,explicit,keyword_search,ras babi,2026-08-15
+767,3,AL,AL,0.99950886,1,individual,,opinion_attack_ambiguity,keyword_search,kayak gitu,2026-08-10
+826,3,HS,HS,0.99967515,1,protected_group,ethnicity,ambiguous_reference,keyword_search,jawa,2026-08-15
+504,3,N,N,0.9997944,0,none,,explicit,browsing,,2026-08-07
+871,3,HS,HS,0.99967563,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,cowok,2026-08-15
+865,3,HS,HS,0.99966395,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,harus begini,2026-08-15
+580,3,AL,AL,0.98997736,0,individual,,explicit,keyword_search,tolol lu,2026-08-10
+870,3,HS,HS,0.99967015,1,protected_group,religion,ambiguous_reference,keyword_search,dajjal,2026-08-15
+636,3,HS,HS,0.8576633,0,protected_group,nationality,explicit,keyword_search,bodoh,2026-08-23
+617,3,AL,AL,0.9996525,0,individual,,explicit,keyword_search,tolol lu,2026-08-10
+635,3,HS,AL,0.722103,0,protected_group,ethnicity,explicit,keyword_search,rasis,2026-08-23
+681,3,HS,AL,0.74323297,0,protected_group,sexual_orientation,explicit,keyword_search,lesbian,2026-08-15
+623,3,AL,AL,0.99982905,0,non_protected_group,,explicit,keyword_search,cowok,2026-08-10
+587,3,AL,AL,0.9997936,0,individual,,explicit,keyword_search,goblok,2026-08-10
+848,3,HS,HS,0.9997017,1,protected_group,sexual_orientation,opinion_attack_ambiguity,keyword_search,islamphobia,2026-08-15
+759,3,AL,N,0.984608,1,individual,,ambiguous_reference,keyword_search,cuma begini,2026-08-10
+854,3,HS,HS,0.99964404,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,pelecehan,2026-08-15
+760,3,AL,AL,0.9996277,1,non_protected_group,,ambiguous_reference,keyword_search,tu orang,2026-09-25
+453,3,N,N,0.9998234,0,none,,explicit,browsing,,2026-08-15
+673,3,HS,AL,0.99473345,0,protected_group,sexual_orientation,explicit,keyword_search,homo najis,2026-08-15
+572,3,AL,AL,0.9994704,0,individual,,explicit,keyword_search,dongo,2026-08-10
+624,3,AL,AL,0.79167545,0,individual,,explicit,keyword_search,anjing,2026-08-10
+690,3,HS,HS,0.9993204,0,protected_group,ethnicity,explicit,keyword_search,dasar imigran,2026-08-15
+651,3,HS,HS,0.9995309,0,protected_group,religion,explicit,keyword_search,zionis,2026-08-15
+611,3,AL,AL,0.9998134,0,non_protected_group,,explicit,keyword_search,bangsat lu,2026-08-10
+711,3,N,N,0.9997098,1,none,,sarcasm_or_irony,browsing,,2026-07-29
+797,3,AL,AL,0.99897707,1,individual,,other_and_mixed,keyword_search,lonte,2026-08-12
+551,3,N,N,0.9998117,0,individual,,explicit,browsing,,2026-07-29
+489,3,N,N,0.98851997,0,non_protected_group,,explicit,browsing,,2026-08-07
+652,3,HS,HS,0.999551,0,protected_group,ethnicity,explicit,keyword_search,jawa,2026-08-15
+834,3,HS,HS,0.9993926,1,protected_group,disability,ambiguous_reference,keyword_search,tunarungu,2026-08-15
+667,3,HS,N,0.98998636,0,protected_group,nationality,explicit,keyword_search,israel,2026-08-15
+464,3,N,N,0.9998,0,institution_policy_idea,,explicit,browsing,,2026-08-15
+766,3,AL,AL,0.997792,1,individual,,ambiguous_reference,keyword_search,kerja begini,2026-08-10
+609,3,AL,AL,0.99858785,0,individual,,explicit,keyword_search,gak becus,2026-08-10
+860,3,HS,HS,0.9995721,1,protected_group,ethnicity,ambiguous_reference,keyword_search,kalau begini,2026-08-15
+610,3,AL,AL,0.99969697,0,individual,,explicit,keyword_search,babi lu,2026-08-10
+796,3,AL,AL,0.99965703,1,individual,,opinion_attack_ambiguity,keyword_search,kerjaan dibiarin,2026-08-12
+638,3,HS,HS,0.9990809,0,protected_group,race,explicit,keyword_search,cina babi,2026-08-15
+707,3,N,AL,0.84080094,1,none,,quotation_or_counterspeech,browsing,,2026-07-29
+695,3,N,N,0.987917,1,non_protected_group,,opinion_attack_ambiguity,browsing,,2026-09-21
+818,3,HS,HS,0.9996222,1,protected_group,disability,ambiguous_reference,keyword_search,down syndrome,2026-08-15
+642,3,HS,HS,0.9961253,0,protected_group,gender,explicit,keyword_search,betina,2026-08-15
+820,3,HS,HS,0.9995591,1,protected_group,religion,ambiguous_reference,keyword_search,sesat,2026-08-15
+678,3,HS,AL,0.8777412,0,protected_group,nationality,explicit,keyword_search,dasar goblok,2026-08-15
+823,3,HS,HS,0.99969804,1,protected_group,race,ambiguous_reference,keyword_search,penjajah,2026-08-15
+625,3,AL,AL,0.9998435,0,individual,,explicit,keyword_search,babi,2026-08-10
+754,3,AL,AL,0.94032204,1,non_protected_group,,escalation,keyword_search,kejadian begini,2026-08-10
+686,3,HS,AL,0.99274737,0,protected_group,disability,explicit,keyword_search,anak cacat,2026-08-15
+873,3,HS,HS,0.99943966,1,protected_group,gender,ambiguous_reference,keyword_search,kalo begini,2026-08-15
+510,3,N,N,0.99984884,0,none,,explicit,browsing,,2026-08-07
+755,3,AL,AL,0.9986689,1,individual,,opinion_attack_ambiguity,keyword_search,orang males,2026-08-10
+497,3,N,N,0.99984586,0,none,,explicit,browsing,,2026-08-07
+781,3,AL,AL,0.9998204,1,individual,,opinion_attack_ambiguity,keyword_search,makin keliatan,2026-08-10
+608,3,AL,AL,0.99973994,0,individual,,explicit,keyword_search,tolol lu,2026-08-10
+672,3,HS,AL,0.9975017,0,protected_group,religion,explicit,keyword_search,kadrun,2026-08-15
+882,3,HS,HS,0.99970394,1,protected_group,religion,ambiguous_reference,keyword_search,penyembah berhala,2026-08-15
+758,3,AL,AL,0.9536419,1,individual,,escalation,keyword_search,nunggu begini,2026-08-10
+708,3,N,HS,0.99861073,1,individual,,opinion_attack_ambiguity,browsing,,2026-09-21
+677,3,HS,AL,0.9998123,0,protected_group,disability,explicit,keyword_search,org buta,2026-08-15
+649,3,HS,HS,0.9572044,0,protected_group,disability,explicit,keyword_search,orang cacat,2026-08-15
+874,3,HS,HS,0.99966407,1,protected_group,race,ambiguous_reference,keyword_search,bule,2026-08-15
+628,3,AL,AL,0.9998416,0,individual,,explicit,keyword_search,goblok lu,2026-08-10
+633,3,HS,HS,0.9955331,0,protected_group,religion,explicit,keyword_search,islam pedo,2026-08-23
+855,3,HS,HS,0.9993591,1,protected_group,race,coded_language_or_euphemism,keyword_search,ngulang terus,2026-08-15
+737,3,AL,AL,0.96957225,1,individual,,opinion_attack_ambiguity,keyword_search,sdm rendah,2026-08-10
+473,3,N,N,0.9997335,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+506,3,N,N,0.9987797,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+640,3,HS,HS,0.997729,0,protected_group,religion,explicit,keyword_search,kadrun,2026-08-15
+888,3,HS,HS,0.99965453,1,protected_group,gender,ambiguous_reference,keyword_search,sampah,2026-08-15
+850,3,HS,HS,0.9996779,1,protected_group,nationality,ambiguous_reference,keyword_search,tiongkok,2026-08-15
+811,3,HS,AL,0.99961996,1,protected_group,gender,quotation_or_counterspeech,keyword_search,sepakat,2026-08-10
+620,3,AL,AL,0.99872094,0,individual,,explicit,keyword_search,tolol lu,2024-11-20
+768,3,AL,AL,0.99975866,1,individual,,opinion_attack_ambiguity,keyword_search,keliatan ngaco,2026-08-10
+646,3,HS,HS,0.9996458,0,protected_group,gender,explicit,keyword_search,jir tolol banget,2026-06-23
+761,3,AL,AL,0.9998105,1,individual,,opinion_attack_ambiguity,keyword_search,keliatan juga,2026-08-10
+557,3,AL,AL,0.9996234,0,individual,,explicit,keyword_search,tolol,2026-08-10
+859,3,HS,HS,0.9995096,1,protected_group,religion,ambiguous_reference,keyword_search,mayoritas,2026-08-15
+578,3,AL,AL,0.99982977,0,individual,,explicit,keyword_search,orang tolol,2026-03-09
+699,3,N,N,0.9997887,1,none,,opinion_attack_ambiguity,browsing,,2026-07-29
+525,3,N,N,0.99842644,0,none,,explicit,browsing,,2026-07-29
+541,3,N,N,0.99980384,0,none,,explicit,browsing,,2026-07-29
+655,3,HS,HS,0.7420097,0,protected_group,religion,explicit,keyword_search,agama teroris,2026-08-15
+878,3,HS,HS,0.99959534,1,protected_group,race,ambiguous_reference,keyword_search,orang ga simpati,2026-08-15
+762,3,AL,AL,0.99676275,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,makin keliatan,2026-08-10
+847,3,HS,HS,0.99966633,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,pelangi,2026-08-15
+734,3,N,HS,0.99966455,1,non_protected_group,,opinion_attack_ambiguity,browsing,,2026-07-29
+564,3,AL,AL,0.9994325,0,individual,,explicit,keyword_search,anjing lu,2026-08-10
+575,3,AL,AL,0.9885565,0,non_protected_group,,explicit,keyword_search,cacat lu,2026-08-10
+691,3,N,N,0.9995821,1,none,,ambiguous_reference,browsing,,2026-08-07
+461,3,N,N,0.99973184,0,none,,explicit,browsing,,2026-08-15
+554,3,N,N,0.9985998,0,institution_policy_idea,,explicit,browsing,,2026-09-26
+787,3,AL,N,0.9961773,1,individual,,opinion_attack_ambiguity,keyword_search,bangsat,2026-09-21
+763,3,AL,AL,0.998195,1,individual,,escalation,keyword_search,orang capet,2026-08-10
+643,3,HS,HS,0.99869066,0,protected_group,nationality,explicit,keyword_search,rohingya,2026-08-15
+805,3,AL,AL,0.57200843,1,non_protected_group,,opinion_attack_ambiguity,keyword_search,sok tau,2026-09-24
+613,3,AL,AL,0.99985456,0,non_protected_group,,explicit,keyword_search,goblok,2026-08-10
+739,3,AL,AL,0.5486165,1,individual,,opinion_attack_ambiguity,keyword_search,maklum,2026-08-10
+547,3,N,N,0.99981946,0,none,,explicit,browsing,,2026-07-29
+726,3,N,AL,0.9208891,1,none,,ambiguous_reference,browsing,,2026-07-29
+684,3,HS,AL,0.997783,0,protected_group,gender,explicit,keyword_search,cewe,2026-08-15
+728,3,N,AL,0.6961414,1,none,,escalation,browsing,,2026-08-14
+574,3,AL,HS,0.99791104,0,non_protected_group,,explicit,keyword_search,anjing lu,2026-08-10
+503,3,N,N,0.9998493,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+789,3,AL,AL,0.9984303,1,individual,,opinion_attack_ambiguity,keyword_search,bodoh,2026-08-14
+490,3,N,N,0.9998487,0,none,,explicit,browsing,,2026-08-07
+675,3,HS,HS,0.9758027,0,protected_group,nationality,explicit,keyword_search,zionist,2026-08-15
+593,3,AL,AL,0.99981374,0,individual,,explicit,keyword_search,kampret,2026-08-10
+499,3,N,N,0.99984455,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+472,3,N,N,0.99984336,0,none,,explicit,browsing,,2026-08-07
+648,3,HS,HS,0.9980634,0,protected_group,ethnicity,explicit,keyword_search,ras licik,2026-08-15
+877,3,HS,HS,0.99957186,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,perempuan,2026-08-15
+521,3,N,N,0.9997732,0,none,,explicit,browsing,,2026-08-07
+493,3,N,N,0.9998149,0,none,,explicit,browsing,,2026-08-07
+764,3,AL,AL,0.9991602,1,individual,,opinion_attack_ambiguity,keyword_search,keputusan begini,2026-08-10
+792,3,AL,AL,0.99982953,1,individual,,opinion_attack_ambiguity,keyword_search,paling ngomong,2026-08-12
+749,3,AL,AL,0.99946994,1,individual,,ambiguous_reference,keyword_search,mainnya keliatan,2026-08-10
+720,3,N,HS,0.80620474,1,individual,,ambiguous_reference,browsing,,2026-07-29
+725,3,N,HS,0.99317753,1,non_protected_group,,ambiguous_reference,browsing,,2026-07-29
+702,3,N,AL,0.9997266,1,institution_policy_idea,,quotation_or_counterspeech,browsing,,2026-09-21
+727,3,N,AL,0.9691337,1,none,,quotation_or_counterspeech,browsing,,2026-07-29
+462,3,N,HS,0.8140133,0,institution_policy_idea,,explicit,browsing,,2026-08-15
+456,3,N,N,0.9997451,0,none,,explicit,browsing,,2026-08-15
+897,3,HS,HS,0.99966097,1,protected_group,religion,coded_language_or_euphemism,keyword_search,radikal,2026-08-15
+556,3,AL,AL,0.99197924,0,non_protected_group,,explicit,keyword_search,anak abah,2026-08-23
+730,3,N,N,0.7350298,1,institution_policy_idea,,opinion_attack_ambiguity,browsing,,2026-08-14
+703,3,N,AL,0.99977297,1,individual,,opinion_attack_ambiguity,browsing,,2026-07-29
+477,3,N,N,0.9998116,0,none,,explicit,browsing,,2026-08-07
+772,3,AL,AL,0.9982699,1,individual,,opinion_attack_ambiguity,keyword_search,kelihatan ngomong,2026-08-10
+566,3,AL,HS,0.727602,0,non_protected_group,,explicit,keyword_search,tolol gitu,2026-08-10
+840,3,HS,HS,0.9996799,1,protected_group,sexual_orientation,ambiguous_reference,keyword_search,penyimpang,2026-08-15
+562,3,AL,AL,0.98591423,0,individual,,explicit,keyword_search,anjing lu,2026-08-10
+776,3,AL,AL,0.99587834,1,individual,,opinion_attack_ambiguity,keyword_search,omongan sampahnya,2026-08-10
+509,3,N,N,0.9998103,0,none,,explicit,browsing,,2026-08-07
+455,3,N,N,0.99868995,0,non_protected_group,,explicit,browsing,,2026-08-15
+565,3,AL,AL,0.99976295,0,individual,,explicit,keyword_search,goblok lu,2026-08-10
+777,3,AL,AL,0.9987301,1,non_protected_group,,ambiguous_reference,keyword_search,otak,2026-09-21
+601,3,AL,HS,0.5301056,0,individual,,explicit,keyword_search,tolol,2026-08-10
+841,3,HS,N,0.6101874,1,protected_group,religion,ambiguous_reference,keyword_search,kapok,2026-08-15
+893,3,HS,HS,0.9997062,1,protected_group,nationality,ambiguous_reference,keyword_search,komunis,2026-08-15
+647,3,HS,HS,0.98257464,0,protected_group,sexual_orientation,explicit,keyword_search,bencong najis,2026-08-15
+819,3,HS,HS,0.9982773,1,protected_group,gender,opinion_attack_ambiguity,keyword_search,lonte,2026-08-15
+485,3,N,N,0.9998517,0,none,,explicit,browsing,,2026-08-07
+881,3,HS,HS,0.99686927,1,protected_group,gender,ambiguous_reference,keyword_search,betina,2026-08-15
+505,3,N,HS,0.51993275,0,institution_policy_idea,,explicit,browsing,,2026-08-07
+832,3,HS,HS,0.9997061,1,protected_group,race,ambiguous_reference,keyword_search,parasit,2026-08-15
+567,3,AL,AL,0.9768256,0,non_protected_group,,explicit,keyword_search,bangsat lu,2026-08-10
+563,3,AL,AL,0.99120235,0,non_protected_group,,explicit,keyword_search,bangsat lu,2026-08-10
+687,3,HS,HS,0.99931896,0,protected_group,gender,explicit,keyword_search,laki bejat,2026-08-15
+783,3,AL,AL,0.9994479,1,individual,,escalation,keyword_search,polanya begitu,2026-08-10
+700,3,N,HS,0.9987458,1,individual,,quotation_or_counterspeech,browsing,,2026-07-29
+476,3,N,N,0.9997074,0,none,,explicit,browsing,,2026-08-07
+682,3,HS,AL,0.99874425,0,protected_group,disability,explicit,keyword_search,org begini,2026-08-15
+511,3,N,N,0.99973863,0,none,,explicit,browsing,,2026-08-07
+475,3,N,N,0.99984527,0,none,,explicit,browsing,,2026-08-07
+561,3,AL,AL,0.9990552,0,individual,,explicit,keyword_search,bacot lu,2026-08-10
+857,3,HS,HS,0.99968326,1,protected_group,ethnicity,ambiguous_reference,keyword_search,selalu begini,2026-08-15
+748,3,AL,AL,0.99948174,1,individual,,opinion_attack_ambiguity,keyword_search,tinggal percaya,2026-08-10
+460,3,N,N,0.9996846,0,none,,explicit,browsing,,2026-08-15
+806,3,AL,AL,0.995899,1,individual,,quotation_or_counterspeech,keyword_search,bilang ribut,2026-08-12
+492,3,N,N,0.9994025,0,none,,explicit,browsing,,2026-09-23
+770,3,AL,AL,0.9996387,1,individual,,opinion_attack_ambiguity,keyword_search,paling ngerti,2026-08-10
+662,3,HS,HS,0.9997116,0,protected_group,nationality,explicit,keyword_search,rasis,2026-08-15
+664,3,HS,HS,0.99966264,0,protected_group,religion,explicit,keyword_search,zionis,2026-08-15
+872,3,HS,HS,0.9995301,1,protected_group,nationality,ambiguous_reference,keyword_search,pengungsi,2026-08-15
+459,3,N,N,0.99976605,0,institution_policy_idea,,explicit,browsing,,2026-08-15
+467,3,N,N,0.9996877,0,none,,explicit,browsing,,2026-08-07
+615,3,AL,AL,0.9998437,0,non_protected_group,,explicit,keyword_search,otak kera,2026-08-10
+701,3,N,N,0.98680335,1,none,,ambiguous_reference,browsing,,2026-07-29
+861,3,HS,HS,0.9996501,1,protected_group,religion,ambiguous_reference,keyword_search,dianggap masalah,2026-08-15

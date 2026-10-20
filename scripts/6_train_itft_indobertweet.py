@@ -1,7 +1,7 @@
 """
-6_itft.py
+6_train_itft_indobertweet.py
 
-Stage 6: single Intermediate Task Fine-Tuning (ITFT) run on Ibrohim & Budi
+Stage 6: single intermediate task fine-tuning (ITFT) run on Ibrohim & Budi
 (Phang et al., 2018 framing -- see docs/decisions.md). Produces the ONE
 checkpoint that every Experiment II (C0-C4) run fine-tunes further, per
 docs/experiment_protocol.md Section 2 / Section 5.

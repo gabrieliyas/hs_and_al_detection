@@ -1,7 +1,7 @@
 """
-4_train_e1_indobertweet.py
+3_train_e1_indobertweet.py
 
-Stage 4: train the Experiment I IndoBERTweet-Target baseline
+Stage 3: train the Experiment I IndoBERTweet-Target baseline
 (E1-IndoBERTweet-Target), 5 random seeds, on GPU.
 
 *** This stage needs a GPU (Google Colab). See the chat response for the
@@ -44,7 +44,7 @@ safe to rerun this script after a Colab disconnect partway through the
 5-seed sweep.
 
 Usage (inside a cloned repo, on a GPU runtime):
-    python scripts/4_train_e1_indobertweet.py
+    python scripts/3_train_e1_indobertweet.py
 
 Input:
     data/processed/ib_train.csv
@@ -53,8 +53,7 @@ Input:
 
 Outputs (per seed):
     results/raw/e1_transformer_seed{K}_predictions.csv   -- row_id, y_true, y_pred
-                                                             (string labels "N"/"AL"/"HS",
-                                                             same convention as Stage 3's output)
+                                                             (string labels "N"/"AL"/"HS")
     results/raw/e1_transformer_seed{K}_probs.npy         -- (n_test, 3) softmax probabilities,
                                                              columns in LABEL2ID id order (0=N,1=AL,2=HS)
     results/tables/e1_transformer_seed_metrics.csv       -- one row per seed, appended incrementally
@@ -290,7 +289,7 @@ def main() -> None:
               f"weighted_f1={test_weighted_f1:.4f}  accuracy={test_accuracy:.4f}  "
               f"(elapsed {elapsed/60:.1f} min)")
 
-        # Saved as canonical string labels ("N"/"AL"/"HS"), matching Stage 3's
+        # Saved as canonical string labels ("N"/"AL"/"HS")
         # e1_svm_test_predictions.csv format -- Stage 5 loads both under the
         # same convention. probs.npy keeps the raw float array separately,
         # with columns in LABEL2ID id order (0=N, 1=AL, 2=HS).
