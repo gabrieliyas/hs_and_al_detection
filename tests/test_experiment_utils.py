@@ -1,10 +1,16 @@
 """Focused regression tests for experiment_utils.py protocol safeguards."""
 from pathlib import Path
+import json
 import shutil
+import sys
 import tempfile
 import unittest
 
 import numpy as np
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 import experiment_utils as eu
 
@@ -22,7 +28,7 @@ class ExperimentUtilsProtocolTests(unittest.TestCase):
         script_path.parent.mkdir(parents=True, exist_ok=True)
         script_path.write_text("# test contextual train script\n", encoding="utf-8")
         (project / "experiment_protocol.md").write_text("protocol test\n", encoding="utf-8")
-        (project / "pipeline_revised.md").write_text("pipeline test\n", encoding="utf-8")
+        (project / "pipeline.md").write_text("pipeline test\n", encoding="utf-8")
         stage = 9 if backbone == "indobertweet" else 10
         dataset_hash = eu.sha256_json({"dataset": "matched-900"})
         fold_hash = eu.sha256_json({"folds": "shared-5-fold"})
@@ -58,6 +64,26 @@ class ExperimentUtilsProtocolTests(unittest.TestCase):
                         "manifest_fingerprint": manifest["fingerprint"],
                     })
         return records
+
+    def test_build_context_text_supports_c0_through_c4(self):
+        row = {
+            "parent_4": "oldest",
+            "parent_3": "older",
+            "parent_2": "middle",
+            "parent_1": "newest",
+            "target_text": "target",
+            "context_size_available": 4,
+        }
+        expected = {
+            0: "target",
+            1: "newest [SEP] target",
+            2: "middle [SEP] newest [SEP] target",
+            3: "older [SEP] middle [SEP] newest [SEP] target",
+            4: "oldest [SEP] older [SEP] middle [SEP] newest [SEP] target",
+        }
+        for context_size, expected_text in expected.items():
+            with self.subTest(context_size=context_size):
+                self.assertEqual(eu.build_context_text(row, context_size, sep=" [SEP] "), expected_text)
 
     def test_context_tokenizer_is_left_truncated(self):
         tok = FakeTokenizer()
@@ -140,7 +166,7 @@ class ExperimentUtilsProtocolTests(unittest.TestCase):
             script_path.parent.mkdir(parents=True, exist_ok=True)
             script_path.write_text("# test stage script\n", encoding="utf-8")
             (project / "experiment_protocol.md").write_text("protocol test\n", encoding="utf-8")
-            (project / "pipeline_revised.md").write_text("pipeline test\n", encoding="utf-8")
+            (project / "pipeline.md").write_text("pipeline test\n", encoding="utf-8")
             run_dir = project / "results" / "runs" / eu.RUN_ID / "stage_09" / "indobertweet_C0_f0_s17"
             run_dir.mkdir(parents=True)
             (run_dir / "old_predictions.csv").write_text("old", encoding="utf-8")
@@ -164,7 +190,7 @@ class ExperimentUtilsProtocolTests(unittest.TestCase):
             script_path.parent.mkdir(parents=True, exist_ok=True)
             script_path.write_text("# test stage script\n", encoding="utf-8")
             (project / "experiment_protocol.md").write_text("protocol test\n", encoding="utf-8")
-            (project / "pipeline_revised.md").write_text("pipeline test\n", encoding="utf-8")
+            (project / "pipeline.md").write_text("pipeline test\n", encoding="utf-8")
             run_dir = project / "results" / "runs" / eu.RUN_ID / "stage_09" / "indobertweet_C0_f0_s17"
             cfg = {"schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID,
                    "stage": 9, "script_name": script_name, "backbone": "indobertweet", "seed": 17}
@@ -378,6 +404,121 @@ class ExperimentUtilsProtocolTests(unittest.TestCase):
             stale = dict(decision)
             stale["rule_version"] = "old-rule"
             eu.validate_backbone_decision_document(stale)
+
+
+    def test_training_strategy_decision_accepts_fully_verified_stage15_bundle(self):
+        temp = Path(tempfile.mkdtemp())
+        try:
+            source_root = Path(eu.__file__).resolve().parent
+            project = temp / "project"
+            for relative in (
+                "scripts/11_select_backbone.py", "scripts/15_evaluate_all.py",
+                "experiment_protocol.md", "pipeline.md",
+            ):
+                destination = project / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source_root / relative, destination)
+
+            input_file = project / "stage11_input.txt"
+            input_file.write_text("stage 11 input\n", encoding="utf-8")
+            stage11_dir = project / "results/runs" / eu.RUN_ID / "stage_11/decision"
+            stage11_config = {"schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID,
+                              "stage": 11, "script_name": eu.PIPELINE_SCRIPTS[11]}
+            stage11_manifest = eu.make_run_manifest(
+                stage=11, script_name=eu.PIPELINE_SCRIPTS[11], config=stage11_config,
+                input_paths=[input_file], project_root=project,
+            )
+            eu.prepare_run_directory(stage11_dir, stage11_manifest, allow_resume=False)
+
+            ids_hash = eu.sha256_json([f"post-{i:04d}" for i in range(900)])
+            mode_doc = {
+                "schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID,
+                "rule_version": eu.BACKBONE_RULE_VERSION, "post_id_sha256": ids_hash,
+                "n_oof_examples": 900, "difference": "itft minus direct", "strategy": "direct",
+                "reason": "no_credible_difference_default",
+                "bootstrap": {"n_bootstrap": 10_000, "ci_level": 95.0},
+            }
+            by_mode = {"target_only": mode_doc, "context_aware": mode_doc}
+            stage15_dir = project / "results/runs" / eu.RUN_ID / "stage_15"
+            stage15_config = {"schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID,
+                              "stage": 15, "script_name": eu.PIPELINE_SCRIPTS[15],
+                              "strategy_decisions": by_mode}
+            stage15_manifest = eu.make_run_manifest(
+                stage=15, script_name=eu.PIPELINE_SCRIPTS[15], config=stage15_config,
+                input_paths=[stage11_dir / eu.RUN_MANIFEST_NAME],
+                metadata={"stage11_manifest_fingerprint": stage11_manifest["fingerprint"]},
+                project_root=project,
+            )
+            eu.prepare_run_directory(stage15_dir, stage15_manifest, allow_resume=False)
+            provenance = {
+                "stage15_manifest_fingerprint": stage15_manifest["fingerprint"],
+                "stage15_output_dir": (Path("results/runs") / eu.RUN_ID / "stage_15").as_posix(),
+                "stage11_manifest_fingerprint": stage11_manifest["fingerprint"],
+                "strategy_input_post_id_sha256": ids_hash,
+            }
+            decision = {"schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID,
+                        "rule_version": eu.BACKBONE_RULE_VERSION, "by_mode": by_mode,
+                        "provenance": provenance}
+            bundled_path = stage15_dir / "training_strategy_decision.json"
+            bundled_path.write_text(__import__("json").dumps(decision, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            (stage15_dir / "stage15_summary.json").write_text("{}\n", encoding="utf-8")
+            index_path = stage15_dir / "artifacts_sha256.json"
+            index = {
+                "schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID, "stage": 15,
+                "script_name": eu.PIPELINE_SCRIPTS[15], "manifest_fingerprint": stage15_manifest["fingerprint"],
+                "sha256": {"training_strategy_decision.json": eu.sha256_file(bundled_path),
+                           "stage15_summary.json": eu.sha256_file(stage15_dir / "stage15_summary.json")},
+            }
+            index_path.write_text(__import__("json").dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            canonical = project / eu.TRAINING_STRATEGY_DECISION_PATH
+            canonical.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(bundled_path, canonical)
+            marker = {
+                "schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID, "stage": 15,
+                "script_name": eu.PIPELINE_SCRIPTS[15], "manifest_fingerprint": stage15_manifest["fingerprint"],
+                "artifact_index_sha256": eu.sha256_file(index_path),
+                "strategy_decision_sha256": eu.sha256_file(bundled_path),
+                "canonical_strategy_decision_sha256": eu.sha256_file(canonical),
+            }
+            (stage15_dir / "stage15_complete.json").write_text(__import__("json").dumps(marker, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            loaded = eu.load_training_strategy_decision(canonical, project_root=project)
+            self.assertEqual(loaded["by_mode"]["target_only"]["strategy"], "direct")
+            # Any post-publication alteration must be detected by the strict loader.
+            canonical.write_text("{}\n", encoding="utf-8")
+            with self.assertRaisesRegex((RuntimeError, ValueError), "hash|stale|decision"):
+                eu.load_training_strategy_decision(canonical, project_root=project)
+        finally:
+            shutil.rmtree(temp)
+
+    def test_training_strategy_decision_requires_stage15_provenance_by_default(self):
+        temp = Path(tempfile.mkdtemp())
+        try:
+            ids_hash = eu.sha256_json([f"post-{i:04d}" for i in range(900)])
+            one = {
+                "schema_version": eu.CONFIG_SCHEMA_VERSION,
+                "run_id": eu.RUN_ID,
+                "rule_version": eu.BACKBONE_RULE_VERSION,
+                "post_id_sha256": ids_hash,
+                "n_oof_examples": 900,
+                "difference": "itft minus direct",
+                "strategy": "direct",
+                "reason": "no_credible_difference_default",
+                "bootstrap": {"n_bootstrap": 10_000, "ci_level": 95.0},
+            }
+            doc = {
+                "schema_version": eu.CONFIG_SCHEMA_VERSION,
+                "run_id": eu.RUN_ID,
+                "rule_version": eu.BACKBONE_RULE_VERSION,
+                "by_mode": {"target_only": one, "context_aware": one},
+            }
+            path = temp / "strategy.json"
+            path.write_text(json.dumps(doc), encoding="utf-8")
+            self.assertEqual(eu.load_training_strategy_decision(path, verify_provenance=False)["by_mode"].keys(), doc["by_mode"].keys())
+            with self.assertRaisesRegex(ValueError, "provenance"):
+                eu.load_training_strategy_decision(path)
+        finally:
+            shutil.rmtree(temp)
+
 
 
 if __name__ == "__main__":

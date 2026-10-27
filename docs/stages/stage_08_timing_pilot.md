@@ -6,7 +6,7 @@
 - `scripts/8_timing_pilot.py` — current Stage 8 script.
 - `tests/test_experiment_utils.py` — includes a regression test confirming C0-C4 input construction.
 - `tests/test_8_timing_pilot.py` — model-free tests for Stage 8 split/configuration rules, contextual LR selection, latency sampling/measurement shape, and summary outputs.
-- `experiment_protocol.md` and `pipeline_revised.md` — current versions included so source fingerprints can be kept consistent with this workspace.
+- `experiment_protocol.md` and `pipeline.md` — current versions included so source fingerprints can be kept consistent with this workspace.
 
 ## Stage 8 run sequence
 

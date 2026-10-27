@@ -79,8 +79,8 @@ class ContextualPreprocessIntegrationTests(unittest.TestCase):
         (self.root / "experiment_protocol.md").write_bytes(
             (SOURCE_ROOT / "experiment_protocol.md").read_bytes()
         )
-        (self.root / "pipeline_revised.md").write_bytes(
-            (SOURCE_ROOT / "pipeline_revised.md").read_bytes()
+        (self.root / "pipeline.md").write_bytes(
+            (SOURCE_ROOT / "pipeline.md").read_bytes()
         )
         _synthetic_context_dataset().to_csv(
             self.root / "data/raw/contextual_dataset.csv", index=False

@@ -258,7 +258,7 @@ LENGTH_ROUNDING_MULTIPLE = 8
 MAX_SEQUENCE_LENGTH = 512
 
 # Stage/script registry is synchronized with experiment_protocol.md and
-# pipeline_revised.md. Stages 6/7 and 9/10 invoke one parameterized script
+# pipeline.md. Stages 6/7 and 9/10 invoke one parameterized script
 # once per backbone. The SVM file is deliberately not in the ordered stages.
 PIPELINE_SCRIPTS = {
     1: "scripts/1_preprocess_benchmark.py",
@@ -304,6 +304,7 @@ SCRIPT_RENAMES = {
     "scripts/12_evaluate_all.py": "scripts/15_evaluate_all.py",
     "scripts/13_error_analysis.py": "scripts/16_error_analysis.py",
     "scripts/14_train_final_models.py": "scripts/17_train_final_models.py",
+    "scripts/17_train_models.py": "scripts/17_train_final_models.py",
 }
 
 
@@ -1746,17 +1747,154 @@ def save_training_strategy_decision(
     return path
 
 
-def load_training_strategy_decision(path=TRAINING_STRATEGY_DECISION_PATH) -> dict:
-    """Load only a valid current-run Stage 15 strategy decision."""
-    doc = load_json_config(path, required_keys=("schema_version", "run_id", "rule_version", "by_mode"))
+def load_training_strategy_decision(
+    path=TRAINING_STRATEGY_DECISION_PATH,
+    *,
+    verify_provenance: bool = True,
+    project_root: str | Path | None = None,
+) -> dict:
+    """Load the current Stage 15 strategy decision and, by default, verify its provenance.
+
+    The canonical JSON is not trusted just because its schema/run ID look current.
+    With ``verify_provenance=True`` (the default), this validates the versioned
+    Stage 15 manifest, every recorded input hash, its artifact index and
+    completion marker, the Stage 11 decision manifest, and byte-level agreement
+    between the canonical and bundled decisions. Use ``verify_provenance=False``
+    only for unit tests or offline inspection of an un-published decision.
+    """
+    root = Path(project_root).resolve() if project_root is not None else Path(__file__).resolve().parent
+    requested = Path(path)
+    if not requested.is_absolute():
+        requested = root / requested
+    requested = requested.resolve()
+    try:
+        doc = json.loads(requested.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Cannot read valid training-strategy decision at {requested}: {exc}") from exc
+    if not isinstance(doc, dict):
+        raise ValueError("Training-strategy decision must be a JSON object")
+    required_keys = {"schema_version", "run_id", "rule_version", "by_mode"}
+    missing = sorted(required_keys - set(doc))
+    if missing:
+        raise ValueError(f"Training-strategy decision is missing required keys: {missing}")
     if doc["schema_version"] != CONFIG_SCHEMA_VERSION or doc["run_id"] != RUN_ID or doc["rule_version"] != BACKBONE_RULE_VERSION:
         raise ValueError("Strategy decision is stale or uses a different decision-rule version")
     modes = doc["by_mode"]
-    if set(modes) != {"target_only", "context_aware"}:
+    if not isinstance(modes, Mapping) or set(modes) != {"target_only", "context_aware"}:
         raise ValueError("Strategy decision is missing target_only/context_aware")
     for mode, item in modes.items():
-        if item.get("strategy") not in {"itft", "direct"}:
+        if not isinstance(item, Mapping) or item.get("strategy") not in {"itft", "direct"}:
             raise ValueError(f"Invalid strategy stored for {mode}")
+        if item.get("schema_version") != CONFIG_SCHEMA_VERSION or item.get("run_id") != RUN_ID or item.get("rule_version") != BACKBONE_RULE_VERSION:
+            raise ValueError(f"Strategy result for {mode} has stale identity metadata")
+        if not _is_sha256_hex(item.get("post_id_sha256")) or int(item.get("n_oof_examples", -1)) != CONTEXT_MATCHED_EXPECTED_ROWS:
+            raise ValueError(f"Strategy result for {mode} lacks the expected aligned OOF ID hash/count")
+        bootstrap = item.get("bootstrap")
+        if not isinstance(bootstrap, Mapping) or int(bootstrap.get("n_bootstrap", -1)) != 10_000 or float(bootstrap.get("ci_level", -1)) != 95.0:
+            raise ValueError(f"Strategy result for {mode} does not use the frozen paired-bootstrap settings")
+    if not verify_provenance:
+        return doc
+
+    provenance = doc.get("provenance")
+    if not isinstance(provenance, Mapping):
+        raise ValueError("Published training-strategy decision is missing Stage 15 provenance")
+    required_provenance = {
+        "stage15_manifest_fingerprint", "stage15_output_dir",
+        "stage11_manifest_fingerprint", "strategy_input_post_id_sha256",
+    }
+    missing_provenance = sorted(required_provenance - set(provenance))
+    if missing_provenance:
+        raise ValueError(f"Training-strategy provenance is incomplete: {missing_provenance}")
+    for field in ("stage15_manifest_fingerprint", "stage11_manifest_fingerprint", "strategy_input_post_id_sha256"):
+        if not _is_sha256_hex(provenance.get(field)):
+            raise ValueError(f"Training-strategy provenance contains an invalid SHA-256 in {field}")
+    canonical_ids_hash = provenance["strategy_input_post_id_sha256"]
+    for mode, item in modes.items():
+        if item["post_id_sha256"] != canonical_ids_hash:
+            raise ValueError(f"Strategy result for {mode} does not match the Stage 15 canonical post-ID hash")
+
+    expected_stage15_rel = Path(*RUN_ROOT_PARTS) / "stage_15"
+    if Path(str(provenance["stage15_output_dir"])) != expected_stage15_rel:
+        raise ValueError("Strategy decision points to a non-authoritative Stage 15 output directory")
+    stage15_root = (root / expected_stage15_rel).resolve()
+    if not stage15_root.is_relative_to(root):
+        raise ValueError("Stage 15 output directory escapes the project root")
+    if requested not in {(root / TRAINING_STRATEGY_DECISION_PATH).resolve(),
+                          (stage15_root / "training_strategy_decision.json").resolve()}:
+        raise ValueError("Strategy decision must be loaded from the canonical path or the authoritative Stage 15 bundle")
+
+    manifest_path = stage15_root / RUN_MANIFEST_NAME
+    marker_path = stage15_root / "stage15_complete.json"
+    index_path = stage15_root / "artifacts_sha256.json"
+    bundled_decision_path = stage15_root / "training_strategy_decision.json"
+    for required_path in (manifest_path, marker_path, index_path, bundled_decision_path):
+        if not required_path.is_file():
+            raise FileNotFoundError(f"Published Stage 15 provenance artifact is missing: {required_path}")
+    manifest = load_json_config(manifest_path)
+    _validate_manifest_integrity(manifest)
+    if str(manifest.get("stage")) != "15" or manifest.get("script_name") != PIPELINE_SCRIPTS[15]:
+        raise RuntimeError("Stage 15 manifest has an invalid stage/script identity")
+    if manifest.get("fingerprint") != provenance["stage15_manifest_fingerprint"]:
+        raise RuntimeError("Strategy decision does not match the current Stage 15 manifest fingerprint")
+    if manifest.get("metadata", {}).get("stage11_manifest_fingerprint") != provenance["stage11_manifest_fingerprint"]:
+        raise RuntimeError("Stage 15 manifest and strategy decision disagree on Stage 11 provenance")
+    if sha256_json(manifest.get("config", {}).get("strategy_decisions")) != sha256_json(modes):
+        raise RuntimeError("Stage 15 manifest and strategy decision disagree on the selected strategies")
+
+    # Inputs are part of the producing manifest; verify their bytes, not only
+    # the manifest's self-fingerprint, before accepting the downstream decision.
+    for relative_name, expected_sha in manifest["input_sha256"].items():
+        relative_path = Path(relative_name)
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            raise RuntimeError(f"Stage 15 manifest contains an unsafe input path: {relative_name}")
+        actual_path = (root / relative_path).resolve()
+        if not actual_path.is_relative_to(root) or not actual_path.is_file():
+            raise RuntimeError(f"Stage 15 input is missing or outside the project: {relative_name}")
+        if sha256_file(actual_path) != expected_sha:
+            raise RuntimeError(f"Stage 15 input hash changed since publication: {relative_name}")
+
+    # Verify Stage 11's source manifest and its matching fingerprint too.
+    stage11_root = versioned_run_root(root) / "stage_11" / "decision"
+    stage11_manifest_path = stage11_root / RUN_MANIFEST_NAME
+    if not stage11_manifest_path.is_file():
+        raise FileNotFoundError(f"Stage 11 manifest is missing: {stage11_manifest_path}")
+    stage11_manifest = load_json_config(stage11_manifest_path)
+    _validate_manifest_integrity(stage11_manifest)
+    if str(stage11_manifest.get("stage")) != "11" or stage11_manifest.get("fingerprint") != provenance["stage11_manifest_fingerprint"]:
+        raise RuntimeError("Training-strategy decision refers to a different/stale Stage 11 manifest")
+
+    index = load_json_config(index_path, required_keys=("schema_version", "run_id", "stage", "script_name", "manifest_fingerprint", "sha256"))
+    if (index.get("schema_version") != CONFIG_SCHEMA_VERSION or index.get("run_id") != RUN_ID
+            or str(index.get("stage")) != "15" or index.get("script_name") != PIPELINE_SCRIPTS[15]
+            or index.get("manifest_fingerprint") != manifest["fingerprint"]
+            or not isinstance(index.get("sha256"), Mapping)):
+        raise RuntimeError("Stage 15 artifact index identity is invalid")
+    for relative_name, expected_sha in index["sha256"].items():
+        relative_path = Path(relative_name)
+        if relative_path.is_absolute() or ".." in relative_path.parts or not _is_sha256_hex(expected_sha):
+            raise RuntimeError(f"Stage 15 artifact index contains an unsafe/invalid entry: {relative_name}")
+        actual_path = (stage15_root / relative_path).resolve()
+        if not actual_path.is_relative_to(stage15_root) or not actual_path.is_file():
+            raise RuntimeError(f"Indexed Stage 15 artifact is missing/outside the bundle: {relative_name}")
+        if sha256_file(actual_path) != expected_sha:
+            raise RuntimeError(f"Stage 15 artifact hash mismatch: {relative_name}")
+
+    marker = load_json_config(marker_path)
+    if (marker.get("schema_version") != CONFIG_SCHEMA_VERSION or marker.get("run_id") != RUN_ID
+            or str(marker.get("stage")) != "15" or marker.get("script_name") != PIPELINE_SCRIPTS[15]
+            or marker.get("manifest_fingerprint") != manifest["fingerprint"]
+            or marker.get("artifact_index_sha256") != sha256_file(index_path)):
+        raise RuntimeError("Stage 15 completion marker is invalid or stale")
+    if marker.get("strategy_decision_sha256") != sha256_file(bundled_decision_path):
+        raise RuntimeError("Bundled Stage 15 strategy decision hash mismatch")
+    canonical_path = (root / TRAINING_STRATEGY_DECISION_PATH).resolve()
+    if not canonical_path.is_file() or marker.get("canonical_strategy_decision_sha256") != sha256_file(canonical_path):
+        raise RuntimeError("Canonical training-strategy decision hash mismatch")
+    bundled = load_json_config(bundled_decision_path)
+    if bundled.get("by_mode") != modes or bundled.get("provenance") != provenance:
+        raise RuntimeError("Canonical and bundled Stage 15 decisions differ")
+    assert_current_run_artifact(marker_path, expected_stage=15, expected_script=PIPELINE_SCRIPTS[15],
+                                expected_fingerprint=str(manifest["fingerprint"]))
     return doc
 
 
@@ -2227,7 +2365,10 @@ def validate_resolved_run_config(
     for key in ("dataset_sha256", "tokenizer_revision", "model_revision"):
         if not config.get(key):
             raise ValueError(f"Run config missing reproducibility audit field {key!r}")
-    if input_mode == "contextual" and not config.get("fold_assignment_sha256"):
+    # Stage 17 trains once on the complete 1,800-row source dataset rather than
+    # using CV folds. All other contextual CV/ablation stages must record the
+    # shared fold assignment; Stage 17 records it only as matched-subset provenance.
+    if input_mode == "contextual" and str(stage) != "17" and not config.get("fold_assignment_sha256"):
         raise ValueError("Contextual run config missing fold_assignment_sha256")
     if require_shared_config:
         context_mode = input_mode == "contextual"
@@ -2337,7 +2478,7 @@ def make_run_manifest(
     root = Path(project_root).resolve()
     script_path = root / expected_script
     protocol_path = root / "experiment_protocol.md"
-    pipeline_path = root / "pipeline_revised.md"
+    pipeline_path = root / "pipeline.md"
     for required_path in (script_path, protocol_path, pipeline_path):
         if not required_path.is_file():
             raise FileNotFoundError(
@@ -2511,7 +2652,7 @@ def assert_current_run_artifact(
         "utility_sha256": sha256_file(Path(__file__).resolve()),
         "script_sha256": sha256_file(root / expected_script) if (root / expected_script).is_file() else None,
         "protocol_sha256": sha256_file(root / "experiment_protocol.md") if (root / "experiment_protocol.md").is_file() else None,
-        "pipeline_sha256": sha256_file(root / "pipeline_revised.md") if (root / "pipeline_revised.md").is_file() else None,
+        "pipeline_sha256": sha256_file(root / "pipeline.md") if (root / "pipeline.md").is_file() else None,
     }
     for key, digest in current_sources.items():
         if digest is None or doc.get(key) != digest:
@@ -2687,12 +2828,9 @@ CONTEXT_EXPECTED_NEEDED_LABEL_CELLS = {
 CONTEXT_FOLD_SEED = 42
 CONTEXT_SHUFFLE_SEED = 42
 CONTEXT_N_SPLITS = 5
-_CONTEXT_PARENT_COLUMNS = {
-    1: ["parent_1"],
-    2: ["parent_2", "parent_1"],
-    3: ["parent_3", "parent_2", "parent_1"],
-    4: ["parent_4", "parent_3", "parent_2", "parent_1"],
-}
+# Reuse the canonical _CONTEXT_PARENT_COLUMNS mapping defined with
+# build_context_text() above. Do not redefine it here: a second definition
+# without the C0 entry would silently break target-only C0 construction.
 _MISSING_TEXT_MARKERS = {"", "nan", "none", "null", "<na>", "n/a", "na"}
 
 
@@ -2954,7 +3092,7 @@ def assert_current_stage_manifest(stage: int | str, project_root: str | Path = "
         "utility_sha256": Path(__file__).resolve(),
         "script_sha256": root / expected_script,
         "protocol_sha256": root / "experiment_protocol.md",
-        "pipeline_sha256": root / "pipeline_revised.md",
+        "pipeline_sha256": root / "pipeline.md",
     }
     for key, path in source_files.items():
         if not path.is_file() or sha256_file(path) != doc.get(key):

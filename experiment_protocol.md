@@ -396,7 +396,8 @@ not a universally superior architecture.
 - **Two models, one per mode, both trained on all 1,800 contextual posts:**
   (1) target-only C0 and (2) a context-aware model using the concrete context
   size selected at Stage 11. The final context-aware model uses up to that
-  many available parents per example (fewer when a thread is shallower); the
+  many available parents per example (fewer when a thread is shallower); target-only
+  uses C0 (the target post only). The
   900-example complete-case dataset remains the basis for the main C0-C4
   comparison. These final models are not substitutes for the 900-example
   models used in Stage 13.
@@ -407,11 +408,23 @@ not a universally superior architecture.
   fine-tuning is chosen if it is credibly better; otherwise the parsimonious
   default is direct fine-tuning (`DEFAULT_STRATEGY_ON_TIE`, an **Assumption**).
   The two modes may select different strategies.
+- **Stage 15 quantitative reporting outputs:** the source-of-truth report
+  bundle and provenance manifest live under
+  `results/runs/left_truncation_v2/stage_15/`. Thesis-ready CSV tables are
+  exported to `results/tables/left_truncation_v2/`; figures (300 dpi PNG) to
+  `results/figures/left_truncation_v2/`. Main Chapter IV tables are compact;
+  per-seed, per-class, per-fold/seed, and long-form confusion-matrix data are
+  separate supplementary tables. The complete confusion-matrix collection
+  is machine-readable, while selected matrices are rendered as separate
+  publication-ready figures. Micro precision/recall/F1, Hamming loss, and
+  exact-match accuracy are omitted from main tables because they are redundant
+  with accuracy for this single-label three-class task. Stage 15 reports but
+  does not reselect the Stage 11 backbone or context sizes.
 - Experiment I models are not reused as the final target-only model; they
   serve the benchmark comparison only.
 - Save two distinct model directories (not a single `final.pt`):
   `models/deployment/<backbone>/target_only/` and
-  `models/deployment/<backbone>/context_aware/`, with a manifest recording
+  `models/deployment/<backbone>/context_aware_C<n>/`, with a manifest recording
   selected backbone, strategy per mode, context size, tokenizer, truncation
   side, sequence length, and training configuration.
 
@@ -441,9 +454,9 @@ do not run it by itself.
 | 12 | Retrain selected-backbone C0-C4 on the full matched 900 | `12_train_e2_retrain_full.py` (rename from `9_train_e2_retrain_full.py`) | Colab | Five model directories, `e2_full_retrain_metrics.csv`; reads Stage 11 decision |
 | 13 | Experiment II-B: availability-aware shallow-pool inference | `13_e2b_generalization.py` (rename from `10_e2b_generalization.py`) | Colab | Descriptive per-model/per-class results; reads Stage 11 decision and Stage 12 models |
 | 14 | Experiment III: direct fine-tuning without ITFT, C0 and selected context | `14_train_e3_direct.py` (rename from `11_train_e3_context_only.py`) | Colab | 20 runs, OOF predictions/probabilities; reads Stage 11 context choice |
-| 15 | Cross-experiment evaluation and strategy selection per deployment mode | `15_evaluate_all.py` (rename from `12_evaluate_all.py`) | VS Code | Chapter IV tables/figures, paired bootstrap results, strategy decision for C0 and context mode |
+| 15 | Cross-experiment quantitative evaluation and strategy selection per deployment mode | `scripts/15_evaluate_all.py` | VS Code | Authoritative bundle under `results/runs/left_truncation_v2/stage_15/`; thesis-facing compact/detailed tables under `results/tables/left_truncation_v2/`; publication-ready figures under `results/figures/left_truncation_v2/`; canonical `results/training_strategy_decision.json` |
 | 16 | Qualitative error analysis | `16_error_analysis.py` (rename from `13_error_analysis.py`) | VS Code | Annotated disagreements and context-type breakdown |
-| 17 | Train final two comparison/deployment models on all 1,800 posts | `17_train_final_models.py` (rename from `14_train_final_models.py`) | Colab | Separate target-only and context-aware model directories plus manifest; reads Stages 11 and 15 decisions |
+| 17 | Train final two comparison/deployment models on all 1,800 posts | `17_train_final_models.py` (renamed from `14_train_final_models.py`) | Colab | Separate target-only and context-aware model directories plus manifest; reads Stages 11 and 15 decisions |
 | 18 | Extension backend | `extension/backend/` **(required)** | VS Code | Inference endpoints loading both final models |
 | 19 | Extension frontend | `extension/frontend/` **(required)** | VS Code | DOM extraction, context preparation, backend calls, UI rendering |
 | 20 | End-to-end integration test and demo capture | `20_test_extension_e2e.py` **(new)** | Local browser/backend | Reproducible test results, screenshots/recording, demo evidence |

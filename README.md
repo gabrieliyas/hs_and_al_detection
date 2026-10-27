@@ -1,164 +1,225 @@
 # Conversation-Aware Hate Speech and Abusive Language Detection on X Using IndoBERTweet
 
-Undergraduate thesis project: hate speech and abusive-language detection on Indonesian X (formerly Twitter), with a focus on conversational context.
+Undergraduate thesis project evaluating whether conversational context improves three-class hate-speech and abusive-language detection on Indonesian X (formerly Twitter), and demonstrating the selected models in a Manifest V3 browser extension.
 
-## Repository structure
+## Source-of-truth files
 
-```text
-data/                  raw and processed datasets (gitignored)
-docs/                  methodology and experiment documentation
-extension/             browser-extension demo (backend + frontend)
-models/                research checkpoints and final comparison models (gitignored)
-results/               generated predictions, tables, figures, and matrices
-scripts/               finalized, reproducible pipeline scripts
-experiment_utils.py    experiment-ID registry, label mapping, evaluation helpers
-dataset_collection_targets.py per-cell annotation collection targets and progress tracker
-README.md
-requirements.txt
-```
+These files must remain at the repository root because run manifests and the shared utility use their exact paths and hashes:
 
-### Model and result organization
+- [`experiment_utils.py`](experiment_utils.py) — model/tokenizer registry, experiment and stage identities, configuration validation, metrics, decisions, and provenance helpers.
+- [`pipeline.md`](pipeline.md) — authoritative stage order, canonical script filenames, execution environments, and outputs.
+- [`experiment_protocol.md`](experiment_protocol.md) — research design, data partitions, training protocol, selection rules, metrics, and interpretation limits.
 
-- `models/final/` contains the final models produced after the experimental configuration and training strategy have been selected.
-- `results/raw/` contains per-run predictions and probability outputs used for evaluation.
-- `results/tables/` contains aggregated metrics and statistical results.
-- `results/figures/` contains generated plots and visualizations.
-- `results/confusion_matrices/` contains confusion-matrix outputs.
+Do not maintain a second active copy such as `pipeline_revised.md` or move the pipeline/protocol into `docs/` without updating the utility and every dependent manifest check. Keep stage-specific runbooks in [`docs/stages/`](docs/stages/README.md) and the Colab transfer checklist in [`docs/COLAB_ARTIFACT_HANDOFF.md`](docs/COLAB_ARTIFACT_HANDOFF.md).
 
-The exact checkpoint, seed, fold, and evaluation procedures are documented in `docs/experiment_protocol.md`.
-
-## Experiments
-
-### Experiment I -- Target-only benchmark
-
-SVM+TF-IDF and IndoBERTweet are trained and evaluated on the Ibrohim & Budi (2019) benchmark dataset using the target post only, without conversational context.
-
-The IndoBERTweet experiment uses multiple random seeds on the same fixed train/validation/test split to measure training stability. The SVM baseline is trained as a deterministic reference.
-
-### Experiment II -- Context-aware with Intermediate Task Fine-Tuning
-
-IndoBERTweet is first fine-tuned on the Ibrohim & Budi benchmark dataset and then further fine-tuned on the custom contextual dataset.
-
-Conversational context is evaluated through a C0-C4 context-window ablation using stratified five-fold cross-validation and multiple random seeds. The main ablation analysis uses the same 900-example complete-context subset across all context-window sizes.
-
-The optimal context configuration (`C_best`) is selected from the cross-validation results. A separate availability-aware generalization analysis is then performed on the shallow pool and does not determine `C_best`.
-
-### Experiment III -- Context-aware without Intermediate Task Fine-Tuning
-
-IndoBERTweet is fine-tuned directly on the custom contextual dataset without the intermediate task fine-tuning stage. The selected context configuration is compared with the corresponding ITFT approach using the same fold assignments.
-
-## Experimental pipeline
-
-The overall workflow is:
+## Project layout
 
 ```text
-Data preprocessing
-        |
-        v
-Experiment I: target-only benchmark
-        |
-        v
-Intermediate Task Fine-Tuning (ITFT)
-        |
-        v
-Experiment II-A: C0-C4 context ablation
-        |
-        v
-Select C_best from cross-validation results
-        |
-        +----> Experiment II-B: availability-aware generalization
-        |
-        v
-Experiment III: ITFT vs. direct fine-tuning
-        |
-        v
-Select final context/training strategy
-        |
-        v
-Train final model(s) on all 1,800 contextual posts
-        |
-        v
-Browser-extension integration
+.
+├── data/
+│   ├── raw/                         # local/private inputs; do not commit unapproved post data
+│   └── processed/                   # generated CSVs; gitignored
+├── docs/
+│   ├── stages/                      # focused stage runbooks, where useful
+│   └── COLAB_ARTIFACT_HANDOFF.md    # exact Colab uploads/downloads and provenance retention
+├── extension/
+│   ├── backend/                     # Stage 18: FastAPI model-inference service
+│   └── frontend/                    # Stage 19: TypeScript Manifest V3 extension
+├── models/                           # checkpoints and deployment models; gitignored
+├── results/
+│   ├── config/                      # sequence-length and learning-rate configs
+│   ├── runs/left_truncation_v2/      # source-of-truth versioned run bundles
+│   ├── tables/left_truncation_v2/    # thesis-facing CSVs
+│   └── figures/left_truncation_v2/   # generated thesis figures
+├── scripts/                          # numbered pipeline scripts
+├── tests/                            # unit/regression and synthetic integration tests
+├── experiment_utils.py
+├── experiment_protocol.md
+├── pipeline.md
+└── README.md
 ```
 
-Detailed execution decisions, including seed counts, fold assignment, checkpoint selection, timing, significance testing, and generalization analysis, are documented in `docs/experiment_protocol.md`.
+`pipeline.md` is the authoritative script map. The ordered Transformer pipeline excludes the optional/legacy SVM baseline. The registered Stage 17 entry point is `scripts/17_train_final_models.py`; do not use the former `14_train_final_models.py` or the shorter `17_train_models.py` as the canonical name. Stage 18 and 19 are source directories, not numbered Python scripts. Stage 20 is `scripts/20_test_extension_e2e.py` plus a written browser-test procedure; implement its real end-to-end checks after the extension interfaces are stable.
 
-## Data
+## Research and dataset overview
 
-`data/processed/` contains regenerated processed datasets and is not versioned.
+### Labels and data
 
-### Benchmark dataset
+The classification labels are `N` (Neither), `AL` (Abusive Language), and `HS` (Hate Speech), with the canonical ID mapping defined in `experiment_utils.py`.
 
-The benchmark dataset is the Ibrohim & Budi (2019) Indonesian hate-speech and abusive-language dataset. The preprocessing pipeline performs deduplication, cleaning, three-class mapping, stratified splitting, and class-weight calculation.
+The custom contextual corpus contains 1,800 annotated posts, balanced across the three classes (600 per class). Stage 2 creates:
 
-### Custom contextual dataset
+- `data/processed/ctx_cleaned.csv` — all 1,800 posts; used to train the final Stage 17 models.
+- `data/processed/ctx_matched_subset.csv` — 900 posts with four available parents and a fixed shared five-fold assignment; used for the primary C0–C4 context-depth comparisons.
+- `data/processed/ctx_shallow_pool.csv` — a disjoint 900-post subset with one to three available parents; used for descriptive, availability-aware generalization analysis.
 
-- **Total posts:** 1,800
-- **Class mapping:** `HS=1` -> Hate Speech (priority over Abusive); otherwise `Abusive=1` -> Abusive Language; otherwise -> Neither.
-- **Class distribution:** Neither 600 / Abusive 600 / Hate Speech 600
-- **Context size distribution (`parent_count_available`):**
-  - 1 parent: 150
-  - 2 parents: 300
-  - 3 parents: 450
-  - 4 parents: 900
-- **Context needed:** 845
-- **Context not needed:** 955
-- **Target group scheme:** `individual` / `protected_group` / `non_protected_group` / `institution_policy_idea` / `none` / `unclear`
-- **Context type taxonomy:** ambiguous reference / sarcasm-irony / coded language-euphemism / escalation / opinion-attack ambiguity / quotation-stance / other-mixed
+The benchmark dataset is the Ibrohim & Budi Indonesian hate-speech and abusive-language dataset. Stage 1 performs cleaning, canonical three-class mapping, stratified 70/15/15 splitting, and computes class weights from the training partition only. Stage 1b selects the shared benchmark maximum sequence length using the benchmark training partition only.
 
-See `docs/annotation_guidelines.md` for the complete annotation definitions and mapping rules.
+**Data handling:** `data/processed/` should not be committed merely to make the directory available. Keep `.gitkeep` and the processing scripts in Git, and store the approved raw/processed data in a persistent, access-controlled location such as a private Drive folder. Preserve the exact files and SHA-256 manifests required by subsequent stages. Do not publish the full contextual post text or annotated dataset unless its research permissions and distribution terms explicitly allow it. See the [Colab artifact handoff checklist](docs/COLAB_ARTIFACT_HANDOFF.md).
 
-## Scripts
+### Experiments
 
-The finalized pipeline scripts are located in `scripts/`:
+- **Experiment I (Stages 3–5):** compare IndoBERTweet and XLM-RoBERTa-base using target-only inputs on the same fixed benchmark split, with five seeds and paired evaluation.
+- **Experiment II-A (Stages 6–12):** perform intermediate task fine-tuning (ITFT) on the benchmark, evaluate C0–C4 with five-fold cross-validation and two seeds per context configuration for each backbone, then select `C_best` and the deployment backbone using the predeclared Stage 11 decision rules. Stage 12 retrains C0–C4 on the complete matched 900-post subset.
+- **Experiment II-B (Stage 13):** evaluate availability-aware inference on the shallow pool. These results are descriptive and do not select `C_best`.
+- **Experiment III (Stage 14):** directly fine-tune the selected backbone without ITFT for C0 and `C_best`, using the shared folds and seeds.
+- **Cross-experiment evaluation (Stage 15):** compare OOF evidence and choose the training strategy separately for target-only and context-aware deployment. The two modes may choose different strategies.
+- **Qualitative error analysis (Stage 16):** inspect paired C0/C_best OOF predictions, gold labels, context-type patterns, and a reproducibly sampled manual-review subset.
+- **Final model training (Stage 17):** train two separate models on all 1,800 posts, using the Stage 11 backbone/context choice and the Stage 15 strategy selected for each mode.
+- **Extension and system evaluation (Stages 18–20):** integrate the models through the FastAPI backend, connect the TypeScript Manifest V3 frontend, then execute automated end-to-end and documented browser tests.
 
-```text
-1_preprocess_benchmark.py
-2_preprocess_contextual.py
-3_train_e1_svm.py
-4_train_e1_indobertweet.py
-5_evaluate_e1.py
-6_itft.py
-7_timing_pilot.py
-8_train_e2_ablation.py
-9_train_e2_retrain_full.py
-10_e2b_generalization.py
-11_train_e3_context_only.py
-12_evaluate_all.py
-13_error_analysis.py
-14_train_final_models.py
-```
-
-Scripts are designed to run from either a local environment or a Google Colab session after cloning the repository.
-
-Example:
-
-```bash
-python scripts/1_preprocess_benchmark.py
-```
-
-or in Colab:
-
-```python
-!python scripts/1_preprocess_benchmark.py
-```
-
-## Documentation
-
-- `docs/annotation_guidelines.md` -- annotation definitions and labelling rules
-- `docs/dataset_split_and_weighting.md` -- dataset splitting and class-weighting decisions
-- `docs/experiment_protocol.md` -- execution protocol for Experiments I, II, and III
-
-## Citation
-
-This project's primary benchmark dataset is from:
-
-> Ibrohim, M. O., & Budi, I. (2019). Multi-label hate speech and abusive language detection in Indonesian Twitter. In *Proceedings of the Third Workshop on Abusive Language Online* (pp. 46-57). Association for Computational Linguistics.
-
-Dataset source: https://github.com/okkyibrohim/id-multi-label-hate-speech-and-abusive-language-detection
+The selected model's held-out/OOF evaluation—not training loss or training duration from Stage 17—is the basis for generalization claims.
 
 ## Setup
 
+Run project commands from the repository root. Use the project's pinned dependency specification when available; for example:
+
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
+
+For GPU training, use a Colab runtime compatible with the pinned PyTorch/Transformers versions and the saved Stage 8 precision/device configuration. Colab's ephemeral runtime is not persistent storage: after every successful stage, transfer the complete provenance bundle and required checkpoint files to persistent storage, preserving paths and filenames.
+
+## Testing, stage validation, and execution are different
+
+### 1. Python compilation check
+
+```bash
+python -m compileall -q experiment_utils.py scripts tests
+```
+
+This catches syntax/bytecode-compilation issues; it does not run tests or validate real data/artifacts.
+
+### 2. Pytest regression tests
+
+Run from the project root in the development environment. Tests exercise helper functions, safeguards, and selected workflows with synthetic or mocked inputs; they do not run the full GPU experiments.
+
+```bash
+# Shared utility tests only
+python -m pytest -q tests/test_experiment_utils.py
+
+# Focused utility + Stage 8 regression tests
+python -m pytest -q tests/test_experiment_utils.py tests/test_8_timing_pilot.py
+
+# Full available test suite — recommended after source changes and before freezing
+python -m pytest -q tests
+```
+
+Use the targeted test commands while working on a component. Run the full suite before committing/finalizing a coordinated source change. The three commands are alternatives of increasing scope; they are not all required after every small edit. `python -m pytest -q tests` is the broadest regression command.
+
+### 3. `--validate-only` preflight for a pipeline stage
+
+Where supported, `python scripts/<stage_script>.py --validate-only` checks that stage's actual inputs, resolved configuration, manifests, hashes, and upstream artifacts without performing the stage's model training or publishing its outputs. It is **not** a pytest run and is not a substitute for the test suite. Run each validation just before the corresponding stage, after its prerequisites are available; validation for a later stage cannot pass before its upstream results exist.
+
+Stage 1, Stage 1b, and Stage 2 currently do not expose `--validate-only`; running them executes preprocessing/length selection. The preflight LR command and Stages 3–17 support the validation flag. Stage-specific special arguments are shown below.
+
+#### Validation commands (run at the appropriate point in the pipeline)
+
+```bash
+# Benchmark LR preflight
+python scripts/preflight_tune_benchmark_lr.py --validate-only
+
+# Experiment I
+python scripts/3_train_e1_indobertweet.py --validate-only
+python scripts/4_train_e1_xlmr.py --validate-only
+python scripts/5_evaluate_e1.py --validate-only
+
+# ITFT: the same script is invoked for Stages 6 and 7
+python scripts/6_train_itft.py --backbone indobertweet --validate-only
+python scripts/6_train_itft.py --backbone xlmr --validate-only
+
+# Stage 8 tunes/measures both backbones; no --backbone argument is required
+python scripts/8_timing_pilot.py --validate-only
+
+# Experiment II-A: the same script is invoked for Stages 9 and 10
+python scripts/9_train_e2_ablation.py --backbone indobertweet --validate-only
+python scripts/9_train_e2_ablation.py --backbone xlmr --validate-only
+
+# Decision gate, retraining, generalization, Experiment III, evaluation and error analysis
+python scripts/11_select_backbone.py --validate-only
+python scripts/12_train_e2_retrain_full.py --validate-only
+python scripts/13_e2b_generalization.py --validate-only
+python scripts/14_train_e3_direct.py --validate-only
+python scripts/15_evaluate_all.py --validate-only
+python scripts/16_error_analysis.py --validate-only
+
+# Final two models (reads the verified Stage 11 and Stage 15 decisions)
+python scripts/17_train_final_models.py --validate-only
+```
+
+A successful `--validate-only` run does not mean a training/evaluation stage was completed. Decision stages may compute a decision/report in memory but must not write it in validation mode. The full pipeline audit must also pass before actual run publication; it currently requires the registered scripts, `extension/backend/`, `extension/frontend/`, and `scripts/20_test_extension_e2e.py` to exist under their canonical paths.
+
+### 4. Main pipeline execution commands
+
+Execute in the order specified in [`pipeline.md`](pipeline.md), and do not skip an upstream stage simply because a later script exists. Commands below omit `--validate-only`; perform the matching validation first wherever supported.
+
+```bash
+# VS Code: preprocessing and shared inputs
+python scripts/1_preprocess_benchmark.py
+python scripts/1b_select_benchmark_max_length.py
+python scripts/2_preprocess_contextual.py
+
+# Colab: learning-rate preflight and Experiment I
+python scripts/preflight_tune_benchmark_lr.py
+python scripts/3_train_e1_indobertweet.py
+python scripts/4_train_e1_xlmr.py
+
+# VS Code: Experiment I evaluation
+python scripts/5_evaluate_e1.py
+
+# Colab: ITFT and timing/configuration pilot
+python scripts/6_train_itft.py --backbone indobertweet
+python scripts/6_train_itft.py --backbone xlmr
+python scripts/8_timing_pilot.py
+
+# Colab: Experiment II-A; run once per backbone
+python scripts/9_train_e2_ablation.py --backbone indobertweet
+python scripts/9_train_e2_ablation.py --backbone xlmr
+
+# VS Code: select the backbone/context size
+python scripts/11_select_backbone.py
+
+# Colab: retrain on matched subset, shallow-pool evaluation, and Experiment III
+python scripts/12_train_e2_retrain_full.py
+python scripts/13_e2b_generalization.py
+python scripts/14_train_e3_direct.py
+
+# VS Code: cross-experiment evaluation/strategy selection and qualitative error analysis
+python scripts/15_evaluate_all.py
+python scripts/16_error_analysis.py
+
+# Colab: final target-only and context-aware models on all 1,800 posts
+python scripts/17_train_final_models.py
+```
+
+Stage 16's completed human-review worksheet is finalized separately with `python scripts/16_error_analysis.py --finalize-review`; see [`docs/stages/stage_16_error_analysis.md`](docs/stages/stage_16_error_analysis.md). Stage 20's invocation will be documented after the real FastAPI and extension interfaces are implemented.
+
+## Output and reproducibility conventions
+
+- Run namespace: `left_truncation_v2`.
+- Versioned run bundles and provenance: `results/runs/left_truncation_v2/`.
+- Shared configs: `results/config/sequence_length.json` and `results/config/learning_rates.json`.
+- Stage 11 canonical selection: `results/backbone_decision.json`.
+- Stage 15 canonical per-mode strategy decision: `results/training_strategy_decision.json`.
+- Thesis-facing CSV tables: `results/tables/left_truncation_v2/`.
+- Thesis figures: `results/figures/left_truncation_v2/`.
+- Final deployment models: `models/deployment/<backbone>/target_only/` and `models/deployment/<backbone>/context_aware_C<n>/`.
+
+Never flatten a run bundle or keep only its headline CSV. Downstream stages can validate manifests, completion markers, artifact indexes, prediction/probability files, and SHA-256 hashes. Archive old unversioned outputs instead of allowing them to satisfy a new run's resume check. Freeze `experiment_utils.py`, `pipeline.md`, `experiment_protocol.md`, configuration decisions, and stage source files before the clean corrected experiment rerun.
+
+## Documentation map
+
+- [`pipeline.md`](pipeline.md) — canonical stage sequence and files.
+- [`experiment_protocol.md`](experiment_protocol.md) — experiment design and statistical/model-selection rules.
+- [`docs/COLAB_ARTIFACT_HANDOFF.md`](docs/COLAB_ARTIFACT_HANDOFF.md) — exact Colab upload/download checklist and retained artifact paths.
+- [`docs/stages/`](docs/stages/README.md) — focused runbooks for stages with special operational requirements.
+- `docs/annotation_guidelines.md` — class/annotation definitions, if present in the project.
+- `docs/dataset_split_and_weighting.md` — benchmark split and class-weighting decisions, if present in the project.
+
+## Citation
+
+The benchmark dataset is based on:
+
+> Ibrohim, M. O., & Budi, I. (2019). Multi-label hate speech and abusive language detection in Indonesian Twitter. In *Proceedings of the Third Workshop on Abusive Language Online* (pp. 46–57). Association for Computational Linguistics.
+
+Dataset source: <https://github.com/okkyibrohim/id-multi-label-hate-speech-and-abusive-language-detection>

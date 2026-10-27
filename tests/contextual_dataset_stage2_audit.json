@@ -1,0 +1,36 @@
+{
+  "test_type": "Stage 2 contextual preprocessing integration test on the uploaded real dataset, run in an isolated temporary project",
+  "source_file_sha256": "edb3f66e7ccc0abbc4829f6b3215bdefb6b3026c2f2e2b972e69eec23cccdaa3",
+  "source_rows": 1800,
+  "canonical_label_counts": {
+    "AL": 600,
+    "HS": 600,
+    "N": 600
+  },
+  "context_size_available_counts": {
+    "1": 150,
+    "2": 300,
+    "3": 450,
+    "4": 900
+  },
+  "post_id_unique": true,
+  "target_text_unique": true,
+  "matched_rows": 900,
+  "matched_fold_counts": {
+    "0": 180,
+    "1": 180,
+    "2": 180,
+    "3": 180,
+    "4": 180
+  },
+  "shallow_pool_rows": 900,
+  "shallow_availability_counts": {
+    "1": 150,
+    "2": 300,
+    "3": 450
+  },
+  "matched_shallow_disjoint": true,
+  "manifest_hash_verification": "passed",
+  "manifest_fingerprint": "1221072350d01d60462da5c2114834178be16427b4516990284796e7a2bf86ca",
+  "result": "PASS"
+}

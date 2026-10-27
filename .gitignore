@@ -1,24 +1,33 @@
-# --- Data (regenerable from raw + preprocessing scripts) ---
+# --- Raw and processed data ---
+# Keep private source datasets and generated processed data out of Git.
+data/raw/*
+!data/raw/.gitkeep
+
 data/processed/*
 !data/processed/.gitkeep
 
-# --- Model checkpoints and all generated model-directory contents ---
-# Model artefacts are large/regenerable and are transferred separately
-# between VS Code/Colab (Google Drive recommended).
+# --- Model checkpoints and deployment artefacts ---
 models/**
 !models/.gitkeep
 
-# --- Raw per-fold / per-seed prediction dumps ---
+# --- High-volume run bundles, raw predictions and manual-review files ---
+# Retain compact configuration, aggregate tables, thesis figures, and canonical
+# decision JSONs unless they contain restricted post-level information.
+results/runs/**
+!results/runs/.gitkeep
 results/raw/*
 !results/raw/.gitkeep
+results/manual_review/*
+!results/manual_review/.gitkeep
 
 # --- Python ---
 __pycache__/
-*.pyc
+*.py[cod]
 .ipynb_checkpoints/
 venv/
 .venv/
 *.egg-info/
+.pytest_cache/
 
 # --- OS / editor ---
 .DS_Store
