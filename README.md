@@ -25,14 +25,14 @@ Do not move the pipeline/protocol into `docs/` without updating the utility and 
 ├── extension/
 │   ├── backend/                     # Stage 18: FastAPI model-inference service
 │   └── frontend/                    # Stage 19: TypeScript Manifest V3 extension
-├── models/                           # checkpoints and deployment models; gitignored
+├── models/                          # checkpoints and deployment models; gitignored
 ├── results/
 │   ├── config/                      # sequence-length and learning-rate configs
-│   ├── runs/left_truncation_v2/      # source-of-truth versioned run bundles
-│   ├── tables/left_truncation_v2/    # thesis-facing CSVs
-│   └── figures/left_truncation_v2/   # generated thesis figures
-├── scripts/                          # numbered pipeline scripts
-├── tests/                            # unit/regression and synthetic integration tests
+│   ├── runs/left_truncation_v2/     # source-of-truth versioned run bundles
+│   ├── tables/left_truncation_v2/   # thesis-facing CSVs
+│   └── figures/left_truncation_v2/  # generated thesis figures
+├── scripts/                         # numbered pipeline scripts
+├── tests/                           # unit/regression and synthetic integration tests
 ├── experiment_utils.py
 ├── experiment_protocol.md
 ├── pipeline.md

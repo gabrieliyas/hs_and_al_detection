@@ -1,0 +1,37 @@
+{
+  "benchmark_hard_cap_hit": false,
+  "benchmark_length_percentile": 95.0,
+  "benchmark_length_percentile_tokens": {
+    "indobertweet": 66.0,
+    "xlmr": 74.0
+  },
+  "benchmark_length_source_partition": "benchmark_train",
+  "benchmark_training_rows": 8922,
+  "benchmark_training_split_sha256": "86c247fa652bd5f235d6d6aa505980ffc75a583db6e805648cf2c6cbbd5cc80a",
+  "benchmark_training_text_column": "clean_text",
+  "benchmark_truncation_rate_at_max_length": {
+    "indobertweet": 0.02163192109392513,
+    "xlmr": 0.03496973772696705
+  },
+  "max_length_benchmark": 80,
+  "run_id": "left_truncation_v2",
+  "schema_version": "thesis-run-config-v3",
+  "selection_script": "1b_select_benchmark_max_length.py",
+  "selection_script_version": "1.0",
+  "target_only_truncation_side": "right",
+  "token_count_includes_special_tokens": true,
+  "tokenizer_batch_size": 64,
+  "tokenizer_classes": {
+    "indobertweet": "BertTokenizer",
+    "xlmr": "XLMRobertaTokenizer"
+  },
+  "tokenizer_model_ids": {
+    "indobertweet": "indolem/indobertweet-base-uncased",
+    "xlmr": "FacebookAI/xlm-roberta-base"
+  },
+  "tokenizer_resolved_revisions": {
+    "indobertweet": "32e28c05b47e33b6675d2670a1745c50a65e987a",
+    "xlmr": "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089"
+  },
+  "truncation_side": "left"
+}
