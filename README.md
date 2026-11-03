@@ -1,6 +1,6 @@
 # Conversation-Aware Hate Speech and Abusive Language Detection on X Using IndoBERTweet
 
-Undergraduate thesis project evaluating whether conversational context improves three-class hate-speech and abusive-language detection on Indonesian X (formerly Twitter), and demonstrating the selected models in a Manifest V3 browser extension.
+Undergraduate thesis project evaluating whether conversational context improves three-class hate-speech and abusive-language detection on Indonesian X (formerly Twitter), and demonstrating the selected models in a Manifest V3 browser extension using TypeScript.
 
 ## Source-of-truth files
 
@@ -10,14 +10,14 @@ These files must remain at the repository root because run manifests and the sha
 - [`pipeline.md`](pipeline.md) — authoritative stage order, canonical script filenames, execution environments, and outputs.
 - [`experiment_protocol.md`](experiment_protocol.md) — research design, data partitions, training protocol, selection rules, metrics, and interpretation limits.
 
-Do not maintain a second active copy such as `pipeline_revised.md` or move the pipeline/protocol into `docs/` without updating the utility and every dependent manifest check. Keep stage-specific runbooks in [`docs/stages/`](docs/stages/README.md) and the Colab transfer checklist in [`docs/COLAB_ARTIFACT_HANDOFF.md`](docs/COLAB_ARTIFACT_HANDOFF.md).
+Do not move the pipeline/protocol into `docs/` without updating the utility and every dependent manifest check. Keep stage-specific runbooks in [`docs/stages/`](docs/stages/README.md) and the Colab transfer checklist in [`docs/COLAB_ARTIFACT_HANDOFF.md`](docs/COLAB_ARTIFACT_HANDOFF.md).
 
 ## Project layout
 
 ```text
 .
 ├── data/
-│   ├── raw/                         # local/private inputs; do not commit unapproved post data
+│   ├── raw/                         # local/private inputs; gitignored
 │   └── processed/                   # generated CSVs; gitignored
 ├── docs/
 │   ├── stages/                      # focused stage runbooks, where useful
@@ -39,7 +39,7 @@ Do not maintain a second active copy such as `pipeline_revised.md` or move the p
 └── README.md
 ```
 
-`pipeline.md` is the authoritative script map. The ordered Transformer pipeline excludes the optional/legacy SVM baseline. The registered Stage 17 entry point is `scripts/17_train_final_models.py`; do not use the former `14_train_final_models.py` or the shorter `17_train_models.py` as the canonical name. Stage 18 and 19 are source directories, not numbered Python scripts. Stage 20 is `scripts/20_test_extension_e2e.py` plus a written browser-test procedure; implement its real end-to-end checks after the extension interfaces are stable.
+`pipeline.md` is the authoritative script map. The ordered Transformer pipeline excludes the optional/legacy SVM baseline. The registered Stage 17 entry point is `scripts/17_train_final_models.py`. Stage 18 and 19 are source directories, not numbered Python scripts. Stage 20 is `scripts/20_test_extension_e2e.py` plus a written browser-test procedure.
 
 ## Research and dataset overview
 
@@ -80,7 +80,7 @@ python -m pip install -r requirements.txt
 
 For GPU training, use a Colab runtime compatible with the pinned PyTorch/Transformers versions and the saved Stage 8 precision/device configuration. Colab's ephemeral runtime is not persistent storage: after every successful stage, transfer the complete provenance bundle and required checkpoint files to persistent storage, preserving paths and filenames.
 
-## Testing, stage validation, and execution are different
+## Testing, stage validation, and execution
 
 ### 1. Python compilation check
 
