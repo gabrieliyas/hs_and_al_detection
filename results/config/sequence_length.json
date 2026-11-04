@@ -6,12 +6,12 @@
     "xlmr": 74.0
   },
   "benchmark_length_source_partition": "benchmark_train",
-  "benchmark_training_rows": 8922,
-  "benchmark_training_split_sha256": "86c247fa652bd5f235d6d6aa505980ffc75a583db6e805648cf2c6cbbd5cc80a",
+  "benchmark_training_rows": 8913,
+  "benchmark_training_split_sha256": "488025a37c8dcc38735e97faab82c2896a6ff4a963e24acaae79a3bb8ceda725",
   "benchmark_training_text_column": "clean_text",
   "benchmark_truncation_rate_at_max_length": {
-    "indobertweet": 0.02163192109392513,
-    "xlmr": 0.03496973772696705
+    "indobertweet": 0.021653764164703243,
+    "xlmr": 0.035678222820599126
   },
   "max_length_benchmark": 80,
   "run_id": "left_truncation_v2",

@@ -1,0 +1,146 @@
+{
+  "status": "completed",
+  "input_file": "data\\raw\\re_dataset.csv",
+  "encoding": "latin-1",
+  "malformed_csv_lines_skipped": 0,
+  "configuration": {
+    "text_normalization": "Unicode NFKC; remove http/https URLs and standalone USER/URL placeholders; collapse whitespace; preserve casing",
+    "minimum_word_count": 3,
+    "label_mapping": {
+      "HS": "HS (takes priority when HS=1)",
+      "Abusive": "AL when HS=0 and Abusive=1",
+      "neither": "N when HS=0 and Abusive=0"
+    },
+    "deduplication_key": "clean_text",
+    "deduplication_stage": "after text/label validation and before data splitting",
+    "conflict_policy": "exclude",
+    "adjudication_file": "data\\annotations\\ib_duplicate_label_adjudication.csv",
+    "adjudication_actions": [
+      "adjudicate",
+      "exclude"
+    ],
+    "split_ratios": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    },
+    "split_random_state": 42,
+    "class_order": [
+      "N",
+      "AL",
+      "HS"
+    ],
+    "class_weight_source": "training split only"
+  },
+  "row_counts": {
+    "raw_rows_loaded": 13169,
+    "missing_or_blank_raw_text_rows": 0,
+    "empty_after_cleaning_rows": 36,
+    "under_minimum_word_count_rows": 273,
+    "invalid_text_rows_excluded": 309,
+    "invalid_label_rows": 0,
+    "rows_with_any_text_or_label_issue": 309,
+    "valid_text_rows_before_deduplication": 12860,
+    "duplicated_clean_text_groups": 107,
+    "same_label_duplicate_groups": 102,
+    "duplicate_occurrences_total": 122,
+    "same_label_duplicate_occurrences_removed": 117,
+    "conflicting_clean_text_groups": 5,
+    "rows_in_conflicting_groups": 10,
+    "rows_removed_by_same_label_deduplication": 117,
+    "rows_excluded_by_conflict_policy": 10,
+    "conflict_groups_excluded": 5,
+    "conflict_groups_adjudicated": 0,
+    "rows_collapsed_by_adjudication": 0,
+    "cleaned_rows_after_conflict_resolution_and_deduplication": 12733,
+    "cleaned_rows_after_deduplication": 12733,
+    "rows_removed_total_from_valid_text_set": 127,
+    "train_rows": 8913,
+    "validation_rows": 1910,
+    "test_rows": 1910,
+    "total_split_rows": 12733
+  },
+  "class_distributions": {
+    "train": {
+      "N": {
+        "count": 3986,
+        "percentage": 44.72
+      },
+      "AL": {
+        "count": 1164,
+        "percentage": 13.06
+      },
+      "HS": {
+        "count": 3763,
+        "percentage": 42.22
+      }
+    },
+    "validation": {
+      "N": {
+        "count": 854,
+        "percentage": 44.71
+      },
+      "AL": {
+        "count": 249,
+        "percentage": 13.04
+      },
+      "HS": {
+        "count": 807,
+        "percentage": 42.25
+      }
+    },
+    "test": {
+      "N": {
+        "count": 854,
+        "percentage": 44.71
+      },
+      "AL": {
+        "count": 250,
+        "percentage": 13.09
+      },
+      "HS": {
+        "count": 806,
+        "percentage": 42.2
+      }
+    },
+    "cleaned_all": {
+      "N": {
+        "count": 5694,
+        "percentage": 44.72
+      },
+      "AL": {
+        "count": 1663,
+        "percentage": 13.06
+      },
+      "HS": {
+        "count": 5376,
+        "percentage": 42.22
+      }
+    }
+  },
+  "class_weights": {
+    "N": 0.7453587556447566,
+    "AL": 2.5524054982817868,
+    "HS": 0.7895296306138719
+  },
+  "errors": [],
+  "cross_split_clean_text_overlap": {
+    "train_validation": 0,
+    "train_test": 0,
+    "validation_test": 0
+  },
+  "outputs": [
+    "data/processed/ib_cleaned.csv",
+    "data/processed/ib_train.csv",
+    "data/processed/ib_val.csv",
+    "data/processed/ib_test.csv",
+    "data/processed/ib_duplicate_label_conflicts.csv",
+    "data/processed/ib_duplicate_label_conflict_summary.csv",
+    "data/processed/ib_duplicate_label_adjudication_template.csv",
+    "data/processed/ib_conflict_excluded_rows.csv",
+    "data/processed/ib_conflict_resolution_log.csv",
+    "results/tables/ib_class_weights.csv",
+    "results/tables/ib_preprocessing_audit.json",
+    "results/tables/ib_preprocessing_audit.csv"
+  ]
+}
