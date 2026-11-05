@@ -82,7 +82,7 @@ LEGACY_OUTPUT_PATTERNS = (
     "models/E2_itft_context",
     "results/tables/itft_metrics.csv",
 )
-EXPECTED_SPLIT_ROWS = {"train": 8922, "validation": 1912}
+EXPECTED_SPLIT_ROWS = {"train": 8913, "validation": 1910}
 
 
 def _abs(path: str | Path) -> Path:

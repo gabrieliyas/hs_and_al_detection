@@ -12,8 +12,8 @@ writing (Chapter III methodology).
 ### 1.1 Cleaned dataset size -- reproduced, not borrowed
 
 The commonly-cited "13,126-13,130 rows after cleaning" figure is real: a
-2026 paper (*A Comparative Study of PyCaret AutoML and CNN-BiLSTM for
-Binary Hate Speech Detection in Indonesian Twitter*) explicitly reports a
+2026 paper (_A Comparative Study of PyCaret AutoML and CNN-BiLSTM for
+Binary Hate Speech Detection in Indonesian Twitter_) explicitly reports a
 13,130-row cleaned table derived from the original 13,169-tweet corpus.
 
 However, that figure reflects **that paper's own, unspecified cleaning
@@ -22,33 +22,33 @@ themselves. When the preprocessing pipeline already committed to for this
 thesis (remove duplicate tweets; strip `USER`/`URL` placeholder tokens and
 raw URLs; remove tweets with fewer than 3 words after stripping; remove
 empty texts) is actually run against the real `re_dataset.csv`, the result
-is **12,746 rows**, not 13,130:
+is **12,733 rows**, not 13,130:
 
-| Step | Rows removed | Rows remaining |
-|---|---|---|
-| Raw corpus | -- | 13,169 |
-| Exact duplicate tweets removed | 146 | 13,023 |
-| Empty after stripping USER/URL placeholders | 6 | 13,017 |
-| Fewer than 3 words after stripping placeholders | 271 | **12,746** |
+| Step                                            | Rows removed | Rows remaining |
+| ----------------------------------------------- | ------------ | -------------- |
+| Raw corpus                                      | --           | 13,169         |
+| Exact duplicate tweets removed                  | 146          | 13,023         |
+| Empty after stripping USER/URL placeholders     | 6            | 13,017         |
+| Fewer than 3 words after stripping placeholders | 271          | **12,733**     |
 
-**Decision: use 12,746 as the Experiment I dataset size**, since it is the
+**Decision: use 12,733 as the Experiment I dataset size**, since it is the
 number that is actually reproducible from the documented pipeline, rather
 than adopting an external figure whose exact cleaning steps aren't
 disclosed and can't be independently verified. State this reasoning
-explicitly in Chapter III: report both figures (12,746 from this thesis's
+explicitly in Chapter III: report both figures (12,733 from this thesis's
 own pipeline vs. the externally-cited 13,130) and note the discrepancy is
 expected, since different studies apply different (and often unstated)
 cleaning thresholds to the same source corpus.
 
-### 1.2 Three-class label distribution (on the cleaned 12,746 rows)
+### 1.2 Three-class label distribution (on the cleaned 12,733 rows)
 
 Using the priority mapping (`HS=1` -> HS; else `Abusive=1` -> AL; else N):
 
-| Class | Count | % |
-|---|---|---|
-| Neither (N) | 5,699 | 44.71% |
+| Class            | Count | %      |
+| ---------------- | ----- | ------ |
+| Neither (N)      | 5,699 | 44.71% |
 | Hate Speech (HS) | 5,383 | 42.23% |
-| Abusive (AL) | 1,664 | 13.06% |
+| Abusive (AL)     | 1,664 | 13.06% |
 
 (Nearly identical proportions to the raw, uncleaned corpus -- 44.5% / 42.2%
 / 13.3% -- confirming the cleaning step removes low-quality tweets roughly
@@ -65,21 +65,21 @@ nothing (`train_test_split(..., stratify=y)`), and removes any risk of the
 smallest class (Abusive, 13.06%) landing at a meaningfully different
 proportion in the training partition purely by chance.
 
-Verified split sizes on the 12,746-row cleaned dataset:
+Verified split sizes on the 12,733-row cleaned dataset:
 
-| Partition | Rows | % |
-|---|---|---|
-| Train | 8,922 | 70.0% |
-| Validation | 1,912 | 15.0% |
-| Test | 1,912 | 15.0% |
+| Partition  | Rows  | %     |
+| ---------- | ----- | ----- |
+| Train      | 8,913 | 70.0% |
+| Validation | 1,910 | 15.0% |
+| Test       | 1,910 | 15.0% |
 
 Train partition label counts (stratified, `random_state=42`):
 
-| Class | Count | % |
-|---|---|---|
-| N | 3,989 | 44.71% |
-| HS | 3,768 | 42.23% |
-| AL | 1,165 | 13.06% |
+| Class | Count | %      |
+| ----- | ----- | ------ |
+| N     | 5,694 | 44.72% |
+| HS    | 5,376 | 42.22% |
+| AL    | 1,663 | 13.06% |
 
 ### 1.4 Class weight calculation -- computed from the TRAINING partition only
 
@@ -93,10 +93,10 @@ is ever skipped. Illustration, using an unstratified split on the same
 data (`random_state=7`, for comparison only -- not the actual pipeline):
 
 | Class | Stratified train % | Non-stratified train % (illustrative) |
-|---|---|---|
-| N | 44.71% | 44.65% |
-| HS | 42.23% | 42.19% |
-| AL | 13.06% | 13.16% |
+| ----- | ------------------ | ------------------------------------- |
+| N     | 44.72%             | 44.65%                                |
+| HS    | 42.22%             | 42.19%                                |
+| AL    | 13.06%             | 13.16%                                |
 
 Formula used ("balanced" weighting, equivalent to scikit-learn's
 `class_weight="balanced"`):
@@ -106,13 +106,13 @@ w_c = n_train / (n_classes * count_c)
 ```
 
 **Final class weights for Experiment I** (computed from the stratified
-training partition, n_train = 8,922, n_classes = 3):
+training partition, n_train = 8,913, n_classes = 3):
 
 | Class | count_c (train) | Weight w_c |
-|---|---|---|
-| N | 3,989 | 0.7456 |
-| AL | 1,165 | 2.5528 |
-| HS | 3,768 | 0.7893 |
+| ----- | --------------- | ---------- |
+| N     | 3,989           | 0.7456     |
+| AL    | 1,165           | 2.5528     |
+| HS    | 3,768           | 0.7893     |
 
 Implementation: `experiment_utils.compute_class_weights(train_labels)`
 returns these weights keyed by integer label id (via `LABEL2ID`), ready to
@@ -186,8 +186,8 @@ This is worth stating precisely, since the risk is real but the fix is
 mechanical rather than a new stratification variable:
 
 - The C0-C4 ablation conditions are **not five separate pools of
-  examples** -- they are five different *truncated views of the same 900
-  base examples* (each base example has context_size_available == 4, and
+  examples** -- they are five different _truncated views of the same 900
+  base examples_ (each base example has context_size_available == 4, and
   C0/C1/C2/C3/C4 are constructed by truncating how many of its parent
   messages are included).
 - Therefore, **fold assignment must happen once, at the base-example

@@ -1,0 +1,67 @@
+{
+  "benchmark_preflight": {
+    "benchmark_dataset_sha256": "0ca1e503552cbcc54c1048c071730a6fdf725b118238993080dc38699a64ae27",
+    "class_weights_csv_sha256": "360afbb99db8251cdbfaa566a8027fef7572b2027b27016657b25a6c026bb65a",
+    "hyperparameters": {
+      "checkpoint_metric": "macro_f1",
+      "early_stopping_patience": null,
+      "effective_batch_size": 16,
+      "gradient_accumulation_steps": 1,
+      "loss": "weighted_cross_entropy",
+      "lr_scheduler": "linear",
+      "max_epochs": 4,
+      "mixed_precision": true,
+      "optimizer": "AdamW",
+      "per_device_eval_batch_size": 32,
+      "per_device_train_batch_size": 16,
+      "warmup_ratio": 0.0,
+      "weight_decay": 0.01
+    },
+    "max_length_benchmark": 80,
+    "model_ids": {
+      "indobertweet": "indolem/indobertweet-base-uncased",
+      "xlmr": "FacebookAI/xlm-roberta-base"
+    },
+    "model_revisions": {
+      "indobertweet": "32e28c05b47e33b6675d2670a1745c50a65e987a",
+      "xlmr": "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089"
+    },
+    "selection_rule": "highest validation macro-F1; exact ties go to the smaller learning rate",
+    "sequence_length_config_sha256": "802645dd80d6e0b34cd96141d0237f34b5ace495aaf5201304058f0eb7a4472a",
+    "split_assignment_sha256": "34c12eff78c9e63c7e1fcd6e2f8736a90b90a11328a9c32d25abf41f65b71c5b",
+    "total_trial_count": 8,
+    "train_csv_sha256": "488025a37c8dcc38735e97faab82c2896a6ff4a963e24acaae79a3bb8ceda725",
+    "trial_count_per_backbone": 4,
+    "truncation_side": "right",
+    "uses_test_split": false,
+    "validation_csv_sha256": "3b2e29df3ddd506b4d5dec98bde50b5e6156927de622ec9327dbfdac73b01928",
+    "validation_metric": "macro_f1"
+  },
+  "benchmark_trial_macro_f1": {
+    "indobertweet": {
+      "1e-05": 0.8445397178228591,
+      "2e-05": 0.8509482573104478,
+      "3e-05": 0.8488037485999277,
+      "5e-05": 0.8536367659498385
+    },
+    "xlmr": {
+      "1e-05": 0.7941821457373064,
+      "2e-05": 0.8183895898112689,
+      "3e-05": 0.81503697666506,
+      "5e-05": 0.20598166907863
+    }
+  },
+  "learning_rate_benchmark": {
+    "indobertweet": 5e-05,
+    "xlmr": 2e-05
+  },
+  "lr_search_grid": [
+    1e-05,
+    2e-05,
+    3e-05,
+    5e-05
+  ],
+  "lr_tuning_seed": 314159,
+  "run_id": "left_truncation_v2",
+  "schema_version": "thesis-run-config-v3"
+}

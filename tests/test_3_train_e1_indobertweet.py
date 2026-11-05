@@ -39,9 +39,9 @@ def _write_test_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict
     weights_path = tmp_path / "results/tables/ib_class_weights.csv"
     seq_path = tmp_path / "results/config/sequence_length.json"
     lr_path = tmp_path / "results/config/learning_rates.json"
-    train = _write_frame(train_path, 8922, "train")
-    val = _write_frame(val_path, 1912, "validation")
-    test = _write_frame(test_path, 1912, "test")
+    train = _write_frame(train_path, 8913, "train")
+    val = _write_frame(val_path, 1910, "validation")
+    test = _write_frame(test_path, 1910, "test")
     (tmp_path / "results/tables").mkdir(parents=True, exist_ok=True)
 
     eu = stage3.eu
@@ -68,7 +68,7 @@ def _write_test_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict
         "benchmark_length_percentile_tokens": {"indobertweet": 100.0, "xlmr": 108.0},
         "benchmark_truncation_rate_at_max_length": {"indobertweet": 0.01, "xlmr": 0.02},
         "benchmark_training_split_sha256": train_sha,
-        "benchmark_training_rows": 8922,
+        "benchmark_training_rows": 8913,
         "benchmark_training_text_column": "clean_text",
         "tokenizer_model_ids": model_ids,
         "tokenizer_resolved_revisions": revisions,

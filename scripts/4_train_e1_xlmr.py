@@ -1,6 +1,6 @@
 """Stage 4: Experiment I — XLM-RoBERTa-base target-only benchmark training.
 
-Authoritative stage: 4 in pipeline.md / experiment_protocol.md.
+Authoritative stage: 4 in pipeline_revised.md / experiment_protocol.md.
 
 Run on a GPU-enabled Colab runtime after completing Stage 1, Stage 1b,
 Stage 2, the benchmark learning-rate preflight, and Stage 3 (IndoBERTweet):
@@ -184,7 +184,7 @@ def _load_and_validate_inputs() -> dict[str, Any]:
             raise ValueError(f"Benchmark split leakage: {len(overlap)} exact clean_text value(s) occur in {left} and {right}")
 
     # The protocol's documented post-cleaning count and fixed 70/15/15 split.
-    expected_counts = {"train": 8922, "validation": 1912, "test": 1912}
+    expected_counts = {"train": 8913, "validation": 1910, "test": 1910}
     actual_counts = {"train": len(train_df), "validation": len(val_df), "test": len(test_df)}
     if actual_counts != expected_counts:
         raise ValueError(f"Benchmark split counts differ from the frozen Stage 1 output: actual={actual_counts}, expected={expected_counts}. Investigate Stage 1 rather than silently proceeding.")
@@ -226,7 +226,11 @@ def _load_and_validate_inputs() -> dict[str, Any]:
     if preflight.get("class_weights_csv_sha256") != weights_sha:
         raise ValueError("Learning-rate preflight used a different class-weight table")
     if preflight.get("sequence_length_config_sha256") != _sha(paths["sequence_config"]):
-        raise ValueError("Learning-rate preflight used a different sequence_length.json")
+        raise ValueError(
+            "Learning-rate preflight was generated against a different sequence_length.json. "
+            "After the current Stage 1b run, archive the old learning_rates.json and stage_preflight "
+            "artifacts, then rerun preflight_tune_benchmark_lr.py before Stage 3/4."
+        )
     if preflight.get("benchmark_dataset_sha256") != eu.sha256_json({"train_sha256": train_sha, "validation_sha256": val_sha}):
         raise ValueError("Learning-rate preflight benchmark dataset hash does not match current train/validation splits")
     expected_split_sha = eu.sha256_json({"train_sha256": train_sha, "validation_sha256": val_sha, "split_seed": SPLIT_SEED})

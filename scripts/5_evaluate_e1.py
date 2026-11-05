@@ -55,7 +55,7 @@ import experiment_utils as eu  # noqa: E402
 STAGE = 5
 SCRIPT_NAME = "scripts/5_evaluate_e1.py"
 INPUT_MODE = "target_only"
-EXPECTED_TEST_ROWS = 1912
+EXPECTED_TEST_ROWS = 1910
 N_BOOTSTRAP = 10_000
 CI_LEVEL = 95.0
 BOOTSTRAP_SEED = 42
