@@ -170,3 +170,34 @@ def test_legacy_output_names_are_detected(tmp_path: Path, monkeypatch: pytest.Mo
     assert legacy in stage3._resolve_legacy_outputs()
     with pytest.raises(RuntimeError, match="Legacy outputs exist"):
         stage3.assert_no_legacy_stage3_outputs()
+
+
+def test_pinned_revision_accepts_missing_private_metadata_when_full_sha_was_requested() -> None:
+    class TokenizerWithoutCommitMetadata:
+        init_kwargs = {}
+
+    expected = "a" * 40
+    assert stage3._verify_pinned_revision_metadata(
+        TokenizerWithoutCommitMetadata(), expected, artifact_name="Tokenizer", backbone=stage3.BACKBONE
+    ) == expected
+
+
+def test_pinned_revision_rejects_mismatching_exposed_commit() -> None:
+    class TokenizerWithCommitMetadata:
+        _commit_hash = "b" * 40
+        init_kwargs = {}
+
+    with pytest.raises(RuntimeError, match="resolved to"):
+        stage3._verify_pinned_revision_metadata(
+            TokenizerWithCommitMetadata(), "a" * 40, artifact_name="Tokenizer", backbone=stage3.BACKBONE
+        )
+
+
+def test_pinned_revision_rejects_moving_branch_name() -> None:
+    class TokenizerWithoutCommitMetadata:
+        init_kwargs = {}
+
+    with pytest.raises(RuntimeError, match="full immutable"):
+        stage3._verify_pinned_revision_metadata(
+            TokenizerWithoutCommitMetadata(), "main", artifact_name="Tokenizer", backbone=stage3.BACKBONE
+        )

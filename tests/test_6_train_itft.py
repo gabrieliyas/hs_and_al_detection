@@ -132,3 +132,34 @@ def test_checkpoint_hash_inventory_detects_files_and_ignores_its_own_manifest(tm
     files = itft._sha_tree(model_dir)
     assert set(files) == {"config.json", "model.safetensors"}
     assert all(len(value) == 64 for value in files.values())
+
+
+def test_pinned_revision_accepts_missing_private_metadata_when_full_sha_was_requested():
+    class TokenizerWithoutCommitMetadata:
+        init_kwargs = {}
+
+    expected = "a" * 40
+    assert itft._verify_pinned_revision_metadata(
+        TokenizerWithoutCommitMetadata(), expected, artifact_name="Tokenizer", backbone="indobertweet"
+    ) == expected
+
+
+def test_pinned_revision_rejects_mismatching_exposed_commit():
+    class TokenizerWithCommitMetadata:
+        _commit_hash = "b" * 40
+        init_kwargs = {}
+
+    with pytest.raises(RuntimeError, match="resolved to"):
+        itft._verify_pinned_revision_metadata(
+            TokenizerWithCommitMetadata(), "a" * 40, artifact_name="Tokenizer", backbone="indobertweet"
+        )
+
+
+def test_pinned_revision_rejects_moving_branch_name():
+    class TokenizerWithoutCommitMetadata:
+        init_kwargs = {}
+
+    with pytest.raises(RuntimeError, match="full immutable"):
+        itft._verify_pinned_revision_metadata(
+            TokenizerWithoutCommitMetadata(), "main", artifact_name="Tokenizer", backbone="indobertweet"
+        )

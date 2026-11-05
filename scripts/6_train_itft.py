@@ -106,6 +106,49 @@ def _sha(path: Path) -> str:
     return eu.sha256_file(path)
 
 
+def _verify_pinned_revision_metadata(artifact: Any, expected_revision: str, *, artifact_name: str, backbone: str) -> str:
+    """Verify a pinned Hub revision without depending on private metadata fields.
+
+    Every caller must pass ``expected_revision`` to ``from_pretrained``. A
+    full 40-character commit SHA is immutable and is the authoritative pin.
+    Some Transformers versions expose the resolved SHA on ``_commit_hash``;
+    others do not retain it on the returned tokenizer/config object. If it is
+    exposed, verify it. If it is absent, accept only the explicit full SHA
+    supplied to ``from_pretrained`` rather than requiring a private attribute.
+    """
+    expected = str(expected_revision).strip()
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", expected):
+        raise RuntimeError(
+            f"{artifact_name} revision for {backbone} is not a full immutable "
+            f"40-character commit SHA: {expected_revision!r}"
+        )
+
+    init_kwargs = getattr(artifact, "init_kwargs", None) or {}
+    resolved = (
+        getattr(artifact, "_commit_hash", None)
+        or (init_kwargs.get("_commit_hash") if isinstance(init_kwargs, Mapping) else None)
+        or (init_kwargs.get("commit_hash") if isinstance(init_kwargs, Mapping) else None)
+    )
+    if resolved is not None and str(resolved).strip():
+        resolved = str(resolved).strip()
+        if resolved.lower() != expected.lower():
+            raise RuntimeError(
+                f"{artifact_name} resolved to {resolved!r}; expected pinned "
+                f"revision {expected!r} for {backbone}"
+            )
+        return resolved.lower()
+
+    # The immutable commit SHA was passed directly as ``revision=`` to
+    # from_pretrained. Do not fail solely because this Transformers build
+    # does not expose the internal resolved-commit attribute.
+    print(
+        f"Revision metadata notice: {artifact_name} for {backbone} does not "
+        f"expose _commit_hash; continuing with the explicitly requested "
+        f"immutable commit {expected.lower()}."
+    )
+    return expected.lower()
+
+
 def _validate_text_labels(df: pd.DataFrame, path: Path, split_name: str) -> list[str]:
     required = {"clean_text", "label"}
     missing = sorted(required - set(df.columns))
@@ -666,9 +709,9 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     tokenizer = AutoTokenizer.from_pretrained(spec.hf_model_id, revision=tokenizer_revision, use_fast=True)
     eu.configure_tokenizer_for_input(tokenizer, INPUT_MODE)
-    actual_tok_revision = getattr(tokenizer, "_commit_hash", None) or (getattr(tokenizer, "init_kwargs", {}) or {}).get("_commit_hash")
-    if not actual_tok_revision or str(actual_tok_revision).lower() != tokenizer_revision.lower():
-        raise RuntimeError(f"Tokenizer resolved to {actual_tok_revision!r}; expected pinned revision {tokenizer_revision!r}")
+    _verify_pinned_revision_metadata(
+        tokenizer, tokenizer_revision, artifact_name="Tokenizer", backbone=backbone
+    )
     if tokenizer.truncation_side != TRUNCATION_SIDE:
         raise RuntimeError(f"Target-only benchmark ITFT requires truncation_side={TRUNCATION_SIDE!r}")
 
@@ -692,9 +735,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         id2label=eu.ID2LABEL,
         label2id=eu.LABEL2ID,
     )
-    actual_model_revision = getattr(model.config, "_commit_hash", None)
-    if not actual_model_revision or str(actual_model_revision).lower() != model_revision.lower():
-        raise RuntimeError(f"Model resolved to {actual_model_revision!r}; expected pinned revision {model_revision!r}")
+    _verify_pinned_revision_metadata(
+        model.config, model_revision, artifact_name="Model weights", backbone=backbone
+    )
 
     WeightedLossTrainer = _make_weighted_trainer_class(torch, Trainer)
     with tempfile.TemporaryDirectory(prefix=f"itft-{backbone}-", dir=PROJECT_ROOT) as tmp_name:
