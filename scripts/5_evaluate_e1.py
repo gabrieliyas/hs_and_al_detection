@@ -208,6 +208,7 @@ def _load_seed_run(
     test_df: pd.DataFrame,
     y_true_test: np.ndarray,
     test_sha256: str,
+    shared_config,
 ) -> dict[str, Any]:
     """Load a current, hash-verified, row-aligned Stage 3 or Stage 4 run."""
     stage = 3 if backbone == "indobertweet" else 4
