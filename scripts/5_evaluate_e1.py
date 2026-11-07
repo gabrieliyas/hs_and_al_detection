@@ -61,6 +61,46 @@ CI_LEVEL = 95.0
 BOOTSTRAP_SEED = 42
 
 TEST_PATH = PROJECT_ROOT / "data/processed/ib_test.csv"
+TRAIN_PATH = PROJECT_ROOT / "data/processed/ib_train.csv"
+VALIDATION_PATH = PROJECT_ROOT / "data/processed/ib_val.csv"
+CLASS_WEIGHTS_PATH = PROJECT_ROOT / "results/tables/ib_class_weights.csv"
+SEQUENCE_LENGTH_PATH = PROJECT_ROOT / eu.SEQUENCE_LENGTH_CONFIG
+LEARNING_RATE_PATH = PROJECT_ROOT / eu.LEARNING_RATE_CONFIG
+
+# eu.load_shared_run_config() returns a mapping with the top-level keys
+# "learning_rates", "run_id" and "sequence_length". Each entry below is
+# (section of shared_config, key inside that section, key in the run config).
+# A value is either shared by both backbones or a per-backbone mapping.
+SHARED_CONFIG_COMPARISONS: tuple[tuple[str, str, str], ...] = (
+    ("sequence_length", "max_length_benchmark", "max_length_benchmark"),
+    ("learning_rates", "learning_rate_benchmark", "learning_rate_benchmark"),
+)
+
+# learning_rates.json -> "benchmark_preflight": (key there, key in the run config).
+PREFLIGHT_HASH_KEYS: tuple[tuple[str, str], ...] = (
+    ("benchmark_dataset_sha256", "dataset_sha256"),
+    ("train_csv_sha256", "train_split_sha256"),
+    ("validation_csv_sha256", "validation_split_sha256"),
+    ("class_weights_csv_sha256", "class_weights_sha256"),
+    ("split_assignment_sha256", "split_assignment_sha256"),
+    ("sequence_length_config_sha256", "sequence_length_config_sha256"),
+)
+# learning_rates.json -> "benchmark_preflight" -> "hyperparameters".
+PREFLIGHT_HYPERPARAMETER_KEYS: tuple[tuple[str, str], ...] = (
+    ("checkpoint_metric", "checkpoint_metric"),
+    ("early_stopping_patience", "early_stopping_patience"),
+    ("effective_batch_size", "effective_batch_size"),
+    ("gradient_accumulation_steps", "gradient_accumulation_steps"),
+    ("loss", "loss"),
+    ("lr_scheduler", "lr_scheduler"),
+    ("max_epochs", "max_epochs"),
+    ("mixed_precision", "mixed_precision"),
+    ("optimizer", "optimizer"),
+    ("per_device_eval_batch_size", "eval_batch_size"),
+    ("per_device_train_batch_size", "per_device_batch_size"),
+    ("warmup_ratio", "warmup_ratio"),
+    ("weight_decay", "weight_decay"),
+)
 LEGACY_OUTPUTS = (
     "results/raw/e1_svm_test_predictions.csv",
     "results/raw/e1_transformer_seed*_predictions.csv",
@@ -170,7 +210,7 @@ def _validate_input_hashes(manifest: Mapping[str, Any], *, run_dir: Path) -> Non
             )
 
 
-def _verify_artifact_index(run_dir: Path, *, stage: int, script_name: str, fingerprint: str) -> dict:
+def _verify_artifact_index(run_dir: Path, *, stage: int, script_name: str, fingerprint: str) -> dict[str, Any]:
     index_path = run_dir / "artifacts_sha256.json"
     if not index_path.is_file():
         raise FileNotFoundError(f"Missing artifact hash index: {index_path}")
@@ -202,13 +242,267 @@ def _verify_artifact_index(run_dir: Path, *, stage: int, script_name: str, finge
     return index
 
 
+def _read_json_object(path: Path) -> dict[str, Any]:
+    """Read a JSON file whose top level must be an object."""
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Unreadable JSON file: {path}") from exc
+    if not isinstance(document, dict):
+        raise ValueError(f"{path} must contain a JSON object at the top level")
+    return document
+
+
+def _values_match(observed: Any, expected: Any) -> bool:
+    """Equality that compares floats with the same tolerance as the metric checks."""
+    if isinstance(observed, float) or isinstance(expected, float):
+        try:
+            return math.isclose(float(observed), float(expected), rel_tol=0.0, abs_tol=1e-12)
+        except (TypeError, ValueError):
+            return False
+    return bool(observed == expected)
+
+
+def _backbone_value(value: Any, *, name: str, backbone: str) -> Any:
+    """Return value, or its entry for backbone when it is a per-backbone mapping."""
+    if isinstance(value, Mapping):
+        if backbone not in value:
+            raise KeyError(
+                f"{name} has no entry for backbone {backbone!r}; "
+                f"available: {sorted(str(key) for key in value)}"
+            )
+        return value[backbone]
+    return value
+
+
+def _select_learning_rate(trials: Any, *, backbone: str) -> float:
+    """Re-apply the documented rule: highest validation macro-F1, exact ties to the smaller rate."""
+    if not isinstance(trials, Mapping) or not trials:
+        raise ValueError(f"{backbone}: benchmark_trial_macro_f1 has no learning-rate trials")
+    scored: list[tuple[float, float]] = []
+    for rate_text, score in trials.items():
+        try:
+            scored.append((float(rate_text), float(score)))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{backbone}: non-numeric learning-rate trial {rate_text!r}: {score!r}") from exc
+    best_rate, _ = min(scored, key=lambda pair: (-pair[1], pair[0]))
+    return best_rate
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return path.relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _validate_run_config_against_current_inputs(
+    config: Mapping[str, Any],
+    *,
+    backbone: str,
+    test_sha256: str,
+    shared_config: Mapping[str, Any],
+) -> None:
+    """Check one run's recorded config against the inputs that are current now.
+
+    _validate_input_hashes() already re-hashes every file listed in the
+    manifest's input_sha256 map. This function adds independent checks of the
+    run *config* against the files as they are now:
+
+    1. Hashes recorded in the config match the current files, so the config
+       and input_sha256 cannot disagree with each other.
+    2. The config agrees with the contents of sequence_length.json (schema and
+       run ID, max length, training-split hash, target-only truncation side,
+       this backbone's tokenizer model ID and resolved revision).
+    3. The config agrees with the contents of learning_rates.json (this
+       backbone's learning rate, which must also be the best trial under the
+       documented selection rule; search grid; tuning seed).
+    4. The tuning preflight recorded in learning_rates.json used the same
+       data hashes, model revisions, hyperparameters, max length and truncation
+       side as the run, and never used the test split.
+    5. The values in shared_config (the loader's view of both files) equal the
+       run's recorded values.
+    """
+    if not isinstance(shared_config, Mapping):
+        raise TypeError(
+            "shared_config must be a Mapping[str, Any] but eu.load_shared_run_config() "
+            f"returned {type(shared_config).__name__}; update the annotation and "
+            "step 5 of this function to match its actual return type."
+        )
+
+    # 1. Hashes recorded in the config versus the files on disk now.
+    if config.get("test_split_sha256") != test_sha256:
+        raise ValueError(f"{backbone}: run config test_split_sha256 does not match the current ib_test.csv")
+    current_files = {
+        "train_split_sha256": TRAIN_PATH,
+        "validation_split_sha256": VALIDATION_PATH,
+        "class_weights_sha256": CLASS_WEIGHTS_PATH,
+        "sequence_length_config_sha256": SEQUENCE_LENGTH_PATH,
+        "learning_rate_config_sha256": LEARNING_RATE_PATH,
+    }
+    for key, path in current_files.items():
+        if not path.is_file():
+            raise FileNotFoundError(f"{backbone}: current input for {key} is missing: {_display_path(path)}")
+        recorded = config.get(key)
+        observed = _sha(path)
+        if recorded != observed:
+            raise ValueError(
+                f"{backbone}: run config {key} does not match current {_display_path(path)}: "
+                f"recorded {recorded!r}, observed {observed}. If only line endings differ, "
+                "normalise the file to LF; otherwise re-run the producing stage."
+            )
+
+    # 2. Run config versus the contents of the current sequence-length config.
+    sequence = _read_json_object(SEQUENCE_LENGTH_PATH)
+    if sequence.get("schema_version") != eu.CONFIG_SCHEMA_VERSION or sequence.get("run_id") != eu.RUN_ID:
+        raise ValueError(
+            f"{_display_path(SEQUENCE_LENGTH_PATH)} has schema/run ID "
+            f"{sequence.get('schema_version')!r}/{sequence.get('run_id')!r}; "
+            f"expected {eu.CONFIG_SCHEMA_VERSION!r}/{eu.RUN_ID!r}"
+        )
+    if sequence.get("max_length_benchmark") != config.get("max_length_benchmark"):
+        raise ValueError(
+            f"{backbone}: run max_length_benchmark={config.get('max_length_benchmark')!r} but the current "
+            f"sequence-length config selects {sequence.get('max_length_benchmark')!r}"
+        )
+    if sequence.get("benchmark_training_split_sha256") != config.get("train_split_sha256"):
+        raise ValueError(
+            f"{backbone}: the sequence length was selected on a different training split "
+            "than the one this run was trained on"
+        )
+    if sequence.get("target_only_truncation_side") != config.get("truncation_side"):
+        raise ValueError(
+            f"{backbone}: run truncation_side={config.get('truncation_side')!r} but the sequence-length "
+            f"config specifies target_only_truncation_side={sequence.get('target_only_truncation_side')!r}"
+        )
+    tokenizer_ids = sequence.get("tokenizer_model_ids")
+    tokenizer_revisions = sequence.get("tokenizer_resolved_revisions")
+    for label, table in (("tokenizer_model_ids", tokenizer_ids), ("tokenizer_resolved_revisions", tokenizer_revisions)):
+        if not isinstance(table, Mapping) or backbone not in table:
+            raise ValueError(f"{_display_path(SEQUENCE_LENGTH_PATH)}: {label} has no entry for {backbone!r}")
+    if tokenizer_ids[backbone] != config.get("hf_model_id"):
+        raise ValueError(
+            f"{backbone}: run hf_model_id={config.get('hf_model_id')!r} but the sequence length was "
+            f"selected with tokenizer {tokenizer_ids[backbone]!r}"
+        )
+    if tokenizer_revisions[backbone] != config.get("tokenizer_revision"):
+        raise ValueError(
+            f"{backbone}: run tokenizer_revision={config.get('tokenizer_revision')!r} but the sequence length "
+            f"was selected with revision {tokenizer_revisions[backbone]!r}"
+        )
+
+    # 3. Run config versus the contents of the current learning-rate config.
+    rates = _read_json_object(LEARNING_RATE_PATH)
+    rates_name = _display_path(LEARNING_RATE_PATH)
+    if rates.get("schema_version") != eu.CONFIG_SCHEMA_VERSION or rates.get("run_id") != eu.RUN_ID:
+        raise ValueError(
+            f"{rates_name} has schema/run ID {rates.get('schema_version')!r}/{rates.get('run_id')!r}; "
+            f"expected {eu.CONFIG_SCHEMA_VERSION!r}/{eu.RUN_ID!r}"
+        )
+    learning_rate = config.get("learning_rate_benchmark")
+    if isinstance(learning_rate, bool) or not isinstance(learning_rate, (int, float)):
+        raise ValueError(f"{backbone}: run config learning_rate_benchmark is missing or non-numeric")
+    selected_rate = _backbone_value(
+        rates.get("learning_rate_benchmark"), name=f"{rates_name} learning_rate_benchmark", backbone=backbone,
+    )
+    if not _values_match(learning_rate, selected_rate):
+        raise ValueError(
+            f"{backbone}: run learning_rate_benchmark={learning_rate!r} but {rates_name} selects {selected_rate!r}"
+        )
+    trials = rates.get("benchmark_trial_macro_f1")
+    if not isinstance(trials, Mapping) or backbone not in trials:
+        raise ValueError(f"{rates_name}: benchmark_trial_macro_f1 has no entry for {backbone!r}")
+    rederived_rate = _select_learning_rate(trials[backbone], backbone=backbone)
+    if not _values_match(selected_rate, rederived_rate):
+        raise ValueError(
+            f"{backbone}: {rates_name} selects {selected_rate!r}, but its own trials select {rederived_rate!r} "
+            "under 'highest validation macro-F1; exact ties go to the smaller learning rate'"
+        )
+    grid = config.get("lr_search_grid")
+    file_grid = rates.get("lr_search_grid")
+    if not isinstance(grid, list) or not isinstance(file_grid, list) or len(grid) != len(file_grid) or not all(
+        _values_match(recorded_rate, file_rate) for recorded_rate, file_rate in zip(grid, file_grid)
+    ):
+        raise ValueError(f"{backbone}: run lr_search_grid={grid!r} differs from {rates_name} grid {file_grid!r}")
+    trial_rates = sorted(float(rate_text) for rate_text in trials[backbone])
+    if len(trial_rates) != len(grid) or not all(
+        _values_match(trial_rate, grid_rate) for trial_rate, grid_rate in zip(trial_rates, sorted(float(r) for r in grid))
+    ):
+        raise ValueError(f"{backbone}: the trials in {rates_name} do not cover exactly the search grid {grid!r}")
+    if config.get("lr_tuning_seed") != rates.get("lr_tuning_seed"):
+        raise ValueError(
+            f"{backbone}: run lr_tuning_seed={config.get('lr_tuning_seed')!r} but {rates_name} used "
+            f"{rates.get('lr_tuning_seed')!r}"
+        )
+
+    # 4. The tuning preflight recorded alongside the learning rates.
+    preflight = rates.get("benchmark_preflight")
+    if not isinstance(preflight, Mapping):
+        raise ValueError(f"{rates_name} has no benchmark_preflight section")
+    if preflight.get("uses_test_split") is not False:
+        raise ValueError(f"{rates_name}: benchmark_preflight must record uses_test_split=false")
+    for preflight_key, config_key in PREFLIGHT_HASH_KEYS:
+        if preflight.get(preflight_key) != config.get(config_key):
+            raise ValueError(
+                f"{backbone}: {rates_name} benchmark_preflight.{preflight_key} differs from the run's {config_key}; "
+                "the learning rate was tuned on different data or configuration than this run used"
+            )
+    hyperparameters = preflight.get("hyperparameters")
+    if not isinstance(hyperparameters, Mapping):
+        raise ValueError(f"{rates_name}: benchmark_preflight has no hyperparameters section")
+    for preflight_key, config_key in PREFLIGHT_HYPERPARAMETER_KEYS:
+        if preflight_key not in hyperparameters or config_key not in config:
+            raise ValueError(
+                f"{backbone}: cannot compare hyperparameter {preflight_key!r} (preflight) with {config_key!r} (run config); "
+                "one of them is missing"
+            )
+        if not _values_match(config[config_key], hyperparameters[preflight_key]):
+            raise ValueError(
+                f"{backbone}: run {config_key}={config[config_key]!r} but the tuning preflight used "
+                f"{preflight_key}={hyperparameters[preflight_key]!r}"
+            )
+    for table_key, config_key in (("model_ids", "hf_model_id"), ("model_revisions", "model_revision")):
+        preflight_value = _backbone_value(
+            preflight.get(table_key), name=f"{rates_name} benchmark_preflight.{table_key}", backbone=backbone,
+        )
+        if preflight_value != config.get(config_key):
+            raise ValueError(
+                f"{backbone}: run {config_key}={config.get(config_key)!r} but the tuning preflight used {preflight_value!r}"
+            )
+    for key in ("max_length_benchmark", "truncation_side"):
+        if preflight.get(key) != config.get(key):
+            raise ValueError(
+                f"{backbone}: run {key}={config.get(key)!r} but the tuning preflight used {preflight.get(key)!r}"
+            )
+
+    # 5. Cross-check the loader's view (shared_config) of both files.
+    if shared_config.get("run_id") != eu.RUN_ID:
+        raise ValueError(f"shared_config run_id={shared_config.get('run_id')!r}, expected {eu.RUN_ID!r}")
+    for section_name, key, config_key in SHARED_CONFIG_COMPARISONS:
+        section = shared_config.get(section_name)
+        if not isinstance(section, Mapping) or key not in section:
+            available = sorted(str(name) for name in section) if isinstance(section, Mapping) else type(section).__name__
+            raise ValueError(
+                f"shared_config[{section_name!r}] does not provide {key!r}; found {available}. "
+                "Update SHARED_CONFIG_COMPARISONS to the names returned by eu.load_shared_run_config()."
+            )
+        expected = _backbone_value(
+            section[key], name=f"shared_config[{section_name!r}][{key!r}]", backbone=backbone,
+        )
+        if not _values_match(config.get(config_key), expected):
+            raise ValueError(
+                f"{backbone}: run config {config_key}={config.get(config_key)!r} differs from the current "
+                f"shared configuration value {expected!r}"
+            )
+
+
 def _load_seed_run(
     *, backbone: str,
     seed: int,
     test_df: pd.DataFrame,
     y_true_test: np.ndarray,
     test_sha256: str,
-    shared_config,
+    shared_config: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Load a current, hash-verified, row-aligned Stage 3 or Stage 4 run."""
     stage = 3 if backbone == "indobertweet" else 4
@@ -324,10 +618,24 @@ def _load_seed_run(
     saved_test_metrics = metrics.get("test_metrics")
     if not isinstance(saved_test_metrics, Mapping):
         raise ValueError(f"Missing test_metrics in {metrics_path}")
+    # Stage 3/4 store the per-class scores with lower-case class names (f1_n,
+    # f1_al, f1_hs) while the recomputation uses the canonical N/AL/HS labels
+    # (f1_N, ...). Compare case-insensitively; the three names stay distinct.
+    saved_lookup = {str(name).casefold(): value for name, value in saved_test_metrics.items()}
     for key, expected in recomputed.items():
-        observed = saved_test_metrics.get(key)
-        if observed is None or not np.isclose(float(observed), expected, rtol=0, atol=1e-6):
-            raise ValueError(f"Saved test metric {key} differs from recomputation in {metrics_path}")
+        observed = saved_lookup.get(key.casefold())
+        if observed is None:
+            raise ValueError(
+                f"Saved test metric {key!r} is missing from {metrics_path}; "
+                f"saved keys: {sorted(str(name) for name in saved_test_metrics)}; "
+                f"recomputed keys: {sorted(recomputed)}"
+            )
+        if not np.isclose(float(observed), expected, rtol=0, atol=1e-6):
+            raise ValueError(
+                f"Saved test metric {key} differs from recomputation in {metrics_path}: "
+                f"saved {float(observed)!r}, recomputed {expected!r}, "
+                f"absolute difference {abs(float(observed) - expected):.3g}"
+            )
 
     return {
         "backbone": backbone,
@@ -355,7 +663,7 @@ def _prediction_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, flo
 def _build_result_tables(
     y_true: np.ndarray,
     runs: Mapping[str, list[dict[str, Any]]],
-) -> dict[str, pd.DataFrame | dict]:
+) -> dict[str, Any]:
     seeds = list(eu.EVAL_SEEDS_EXP1)
     backbones = ("indobertweet", "xlmr")
     probabilities = {key: [item["probabilities"] for item in runs[key]] for key in backbones}
@@ -504,8 +812,8 @@ def main() -> None:
 
     test_df, y_true, test_sha256 = _load_test_partition()
     shared_config = eu.load_shared_run_config(
-        sequence_length_path=PROJECT_ROOT / eu.SEQUENCE_LENGTH_CONFIG,
-        learning_rate_path=PROJECT_ROOT / eu.LEARNING_RATE_CONFIG,
+        sequence_length_path=SEQUENCE_LENGTH_PATH,
+        learning_rate_path=LEARNING_RATE_PATH,
         require_context=False,
         require_context_lr=False,
     )
