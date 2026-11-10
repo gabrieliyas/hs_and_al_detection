@@ -818,7 +818,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         "validation_metrics": metrics,
     }
     _write_json_atomic(model_out_dir / "itft_checkpoint_manifest.json", model_manifest)
-    _write_json_atomic(stage_run_dir / "metrics.json", metrics)
+    metrics_artifact = {
+        **metrics,
+        "manifest_fingerprint": manifest["fingerprint"],
+    }
+    _write_json_atomic(stage_run_dir / "metrics.json", metrics_artifact)
     _write_json_atomic(stage_run_dir / "artifacts_sha256.json", {
         "run_id": eu.RUN_ID,
         "stage": stage,
