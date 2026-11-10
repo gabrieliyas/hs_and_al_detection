@@ -143,17 +143,48 @@ def _assert_no_legacy_outputs(root: Path = PROJECT_ROOT) -> None:
     eu.assert_no_legacy_outputs(list(dict.fromkeys(path.resolve() for path in found)))
 
 
-def _verify_json_manifest_inputs(manifest: Mapping[str, Any], root: Path, *, label: str) -> None:
+def _verify_json_manifest_inputs(
+    manifest: Mapping[str, Any],
+    root: Path,
+    *,
+    label: str,
+) -> None:
     inputs = manifest.get("input_sha256")
     if not isinstance(inputs, Mapping):
         raise ValueError(f"{label} manifest has no input_sha256 mapping")
-    for relative, expected_hash in inputs.items():
-        path = Path(str(relative))
-        if not path.is_absolute():
-            path = root / path
-        if not path.is_file() or _sha(path) != expected_hash:
-            raise ValueError(f"{label} manifest input is missing or changed: {path}")
 
+    root_resolved = root.resolve()
+
+    for relative, expected_hash in inputs.items():
+        # Normalize Windows-style separators for cross-platform validation.
+        normalized = str(relative).replace("\\", "/")
+        path = Path(normalized)
+
+        if not path.is_absolute():
+            path = root_resolved / path
+
+        path = path.resolve()
+
+        # Prevent manifest paths from escaping the project directory.
+        try:
+            path.relative_to(root_resolved)
+        except ValueError as exc:
+            raise ValueError(
+                f"{label} manifest input resolves outside the project root: "
+                f"{relative} -> {path}"
+            ) from exc
+
+        if not path.is_file():
+            raise ValueError(
+                f"{label} manifest input is missing: {relative} -> {path}"
+            )
+
+        actual_hash = _sha(path)
+        if actual_hash != expected_hash:
+            raise ValueError(
+                f"{label} manifest input hash mismatch: {relative} -> {path}; "
+                f"expected={expected_hash}, actual={actual_hash}"
+            )
 
 def _verify_index_entries(index_path: Path, base_dir: Path, *, expected_identity: Mapping[str, Any], special_paths: Mapping[str, Path] | None = None) -> dict[str, Any]:
     index = _read_json(index_path)
