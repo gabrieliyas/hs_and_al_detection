@@ -470,6 +470,32 @@ def _load_and_validate_inputs() -> dict[str, Any]:
     if sequence_doc.get("context_length_fold_assignment_sha256") != data_audit["fold_assignment_sha256"]:
         raise ValueError("Stage 8 contextual length selection used a different fold assignment")
 
+    # Precompute deterministic post-ID hashes for each CV partition. The
+    # per-run manifest records these hashes so that each fold's training and
+    # held-out membership is auditable independently of the aggregate dataset
+    # and fold-assignment hashes above. `modelling` is already sorted by
+    # CTX_ID_COLUMN, and filtering preserves that order (matching
+    # _build_fold_data()).
+    train_ids_sha256_by_fold: dict[int, str] = {}
+    heldout_ids_sha256_by_fold: dict[int, str] = {}
+    fold_values = modelling[eu.CTX_FOLD_COLUMN].astype(int)
+    for fold in FOLDS:
+        train_ids = modelling.loc[
+            fold_values != fold, eu.CTX_ID_COLUMN
+        ].astype(str).tolist()
+        heldout_ids = modelling.loc[
+            fold_values == fold, eu.CTX_ID_COLUMN
+        ].astype(str).tolist()
+        if len(train_ids) != 720 or len(heldout_ids) != 180:
+            raise ValueError(
+                f"Fold {fold} must have 720 training and 180 held-out IDs; "
+                f"got {len(train_ids)} / {len(heldout_ids)}"
+            )
+        if set(train_ids).intersection(heldout_ids):
+            raise AssertionError(f"Fold {fold} has overlapping training and held-out post IDs")
+        train_ids_sha256_by_fold[fold] = eu.sha256_json(train_ids)
+        heldout_ids_sha256_by_fold[fold] = eu.sha256_json(heldout_ids)
+
     audit = {
         "paths": {
             "matched": matched_path,
@@ -485,6 +511,8 @@ def _load_and_validate_inputs() -> dict[str, Any]:
         "fold_audit": data_audit,
         "fold_assignment_sha256": data_audit["fold_assignment_sha256"],
         "post_id_sha256": data_audit["post_id_sha256"],
+        "train_ids_sha256_by_fold": train_ids_sha256_by_fold,
+        "heldout_ids_sha256_by_fold": heldout_ids_sha256_by_fold,
         "sequence_length_doc": sequence_doc,
         "learning_rate_doc": lr_doc,
         "context_preflight": dict(preflight),
