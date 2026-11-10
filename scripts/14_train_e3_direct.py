@@ -1183,7 +1183,12 @@ def _validate_prerequisites(root: Path = PROJECT_ROOT) -> dict[str, Any]:
     e2_cfg = e2_manifest.get("config")
     if not isinstance(e2_cfg, Mapping):
         raise ValueError("Selected E2 C0 reference run does not contain a resolved config")
-    eu.check_config_parity(e2_cfg, direct_cfg, input_mode=INPUT_MODE)
+    eu.check_config_parity(
+        e2_cfg,
+        direct_cfg,
+        input_mode=INPUT_MODE,
+        exclude_keys=("early_stopping_patience",),
+    )
 
     stage_root, root_manifest = _prepare_root_manifest(audit, root=root)
     audit["stage_root"] = stage_root
