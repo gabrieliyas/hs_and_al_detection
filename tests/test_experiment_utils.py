@@ -14,6 +14,12 @@ if str(ROOT) not in sys.path:
 
 import experiment_utils as eu
 
+# Keyword of eu.check_config_parity() that lists keys to leave out of the
+# comparison. ASSUMPTION: the name is not visible in the files this test was
+# written from; if the real keyword differs, change this one line.
+PARITY_EXCLUDE_KWARG = "exclude_keys"
+EXCLUDED_KEY = "early_stopping_patience"
+
 
 class FakeTokenizer:
     truncation_side = "right"
@@ -307,35 +313,96 @@ class ExperimentUtilsProtocolTests(unittest.TestCase):
         finally:
             shutil.rmtree(temp)
 
+    @staticmethod
+    def _parity_config(backbone, model_id):
+        """A complete contextual run config that passes check_config_parity()."""
+        return {
+            "schema_version": eu.CONFIG_SCHEMA_VERSION,
+            "run_id": eu.RUN_ID,
+            "input_mode": "contextual",
+            "dataset_sha256": "dataset-hash",
+            "split_seed": 42,
+            "eval_seeds_exp1": [42, 123, 2024, 7, 99],
+            "optimizer": "AdamW", "weight_decay": 0.01, "warmup_ratio": 0.1,
+            "lr_scheduler": "linear", "max_epochs": 5, "early_stopping_patience": 2,
+            "loss": "weighted_cross_entropy", "class_weighting_benchmark": "train_only",
+            "checkpoint_metric": "macro_f1", "lr_search_grid": list(eu.LR_SEARCH_GRID),
+            "lr_tuning_seed": 2026, "mixed_precision": "fp16",
+            "input_order": "oldest_to_newest_parents_then_target",
+            "max_length_benchmark": 128, "max_length_context": 256,
+            "fold_column": "fold", "fold_assignment_sha256": "fold-hash", "n_folds": 5,
+            "cv_seeds": [42, 123], "context_order": "parent_4_to_parent_1_then_target",
+            "truncation_side": "left", "hf_model_id": model_id,
+            "learning_rate_benchmark": 2e-5 if backbone == "indobertweet" else 1e-5,
+            "learning_rate_context": 3e-5 if backbone == "indobertweet" else 2e-5,
+            "per_device_batch_size": 8, "gradient_accumulation_steps": 2,
+        }
+
+    def _patience_pair(self):
+        """Two otherwise-matching configs; only the first records early_stopping_patience.
+
+        This models an E2/E3-style comparison in which one side has no early
+        stopping, using the same two-config shape as the existing parity test.
+        """
+        a = self._parity_config("indobertweet", eu.get_backbone("indobertweet").hf_model_id)
+        b = self._parity_config("xlmr", eu.get_backbone("xlmr").hf_model_id)
+        del b[EXCLUDED_KEY]
+        return a, b
+
     def test_config_parity_enforces_schema_hashes_and_left_context_truncation(self):
-        def cfg(backbone, model_id):
-            return {
-                "schema_version": eu.CONFIG_SCHEMA_VERSION,
-                "run_id": eu.RUN_ID,
-                "input_mode": "contextual",
-                "dataset_sha256": "dataset-hash",
-                "split_seed": 42,
-                "eval_seeds_exp1": [42, 123, 2024, 7, 99],
-                "optimizer": "AdamW", "weight_decay": 0.01, "warmup_ratio": 0.1,
-                "lr_scheduler": "linear", "max_epochs": 5, "early_stopping_patience": 2,
-                "loss": "weighted_cross_entropy", "class_weighting_benchmark": "train_only",
-                "checkpoint_metric": "macro_f1", "lr_search_grid": list(eu.LR_SEARCH_GRID),
-                "lr_tuning_seed": 2026, "mixed_precision": "fp16",
-                "input_order": "oldest_to_newest_parents_then_target",
-                "max_length_benchmark": 128, "max_length_context": 256,
-                "fold_column": "fold", "fold_assignment_sha256": "fold-hash", "n_folds": 5,
-                "cv_seeds": [42, 123], "context_order": "parent_4_to_parent_1_then_target",
-                "truncation_side": "left", "hf_model_id": model_id,
-                "learning_rate_benchmark": 2e-5 if backbone == "indobertweet" else 1e-5,
-                "learning_rate_context": 3e-5 if backbone == "indobertweet" else 2e-5,
-                "per_device_batch_size": 8, "gradient_accumulation_steps": 2,
-            }
-        a = cfg("indobertweet", eu.get_backbone("indobertweet").hf_model_id)
-        b = cfg("xlmr", eu.get_backbone("xlmr").hf_model_id)
+        a = self._parity_config("indobertweet", eu.get_backbone("indobertweet").hf_model_id)
+        b = self._parity_config("xlmr", eu.get_backbone("xlmr").hf_model_id)
         eu.check_config_parity(a, b, input_mode="contextual")
         b["truncation_side"] = "right"
         with self.assertRaisesRegex(ValueError, "require truncation_side='left'"):
             eu.check_config_parity(a, b, input_mode="contextual")
+
+    def test_parity_rejects_missing_early_stopping_patience_without_exclusion(self):
+        # The pair differs only in early_stopping_patience, so a rejection can
+        # only be caused by that key.
+        a, b = self._patience_pair()
+        with self.assertRaises(ValueError):
+            eu.check_config_parity(a, b, input_mode="contextual")
+
+    def test_parity_allows_explicitly_excluded_early_stopping_patience(self):
+        exclusion = {PARITY_EXCLUDE_KWARG: (EXCLUDED_KEY,)}
+        a, b = self._patience_pair()
+        with self.subTest(case="missing on one side"):
+            eu.check_config_parity(a, b, input_mode="contextual", **exclusion)
+        a, b = self._patience_pair()
+        b[EXCLUDED_KEY] = 3  # present on both sides but different
+        with self.subTest(case="present with a different value"):
+            eu.check_config_parity(a, b, input_mode="contextual", **exclusion)
+
+    def test_parity_exclusion_does_not_relax_other_hyperparameters(self):
+        changed = {
+            "optimizer": "SGD",
+            "weight_decay": 0.05,
+            "warmup_ratio": 0.2,
+            "lr_scheduler": "cosine",
+            "max_epochs": 9,
+            "loss": "cross_entropy",
+            "checkpoint_metric": "loss",
+        }
+        exclusion = {PARITY_EXCLUDE_KWARG: (EXCLUDED_KEY,)}
+        for key, value in changed.items():
+            a, b = self._patience_pair()
+            self.assertNotEqual(a[key], value)
+            b[key] = value
+            with self.subTest(key=key):
+                with self.assertRaises(ValueError):
+                    eu.check_config_parity(a, b, input_mode="contextual", **exclusion)
+
+    def test_parity_rejects_exclusion_of_unknown_key(self):
+        # The configs would pass with early_stopping_patience excluded, so the
+        # ValueError can only come from the unknown key.
+        a, b = self._patience_pair()
+        eu.check_config_parity(a, b, input_mode="contextual", **{PARITY_EXCLUDE_KWARG: (EXCLUDED_KEY,)})
+        with self.assertRaises(ValueError):
+            eu.check_config_parity(
+                a, b, input_mode="contextual",
+                **{PARITY_EXCLUDE_KWARG: (EXCLUDED_KEY, "not_a_real_hyperparameter")},
+            )
 
     def test_context_cv_grid_requires_the_protocol_seed_grid(self):
         temp = Path(tempfile.mkdtemp())
