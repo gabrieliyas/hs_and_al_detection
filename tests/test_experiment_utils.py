@@ -14,9 +14,7 @@ if str(ROOT) not in sys.path:
 
 import experiment_utils as eu
 
-# Keyword of eu.check_config_parity() that lists keys to leave out of the
-# comparison. ASSUMPTION: the name is not visible in the files this test was
-# written from; if the real keyword differs, change this one line.
+# Keyword of eu.check_config_parity() that lists keys to leave out of the comparison.
 PARITY_EXCLUDE_KWARG = "exclude_keys"
 EXCLUDED_KEY = "early_stopping_patience"
 
@@ -359,9 +357,11 @@ class ExperimentUtilsProtocolTests(unittest.TestCase):
 
     def test_parity_rejects_missing_early_stopping_patience_without_exclusion(self):
         # The pair differs only in early_stopping_patience, so a rejection can
-        # only be caused by that key.
+        # only be caused by that key. check_config_parity reports absent
+        # required keys as KeyError (value mismatches and unknown exclusions
+        # are ValueError).
         a, b = self._patience_pair()
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(KeyError, EXCLUDED_KEY):
             eu.check_config_parity(a, b, input_mode="contextual")
 
     def test_parity_allows_explicitly_excluded_early_stopping_patience(self):
