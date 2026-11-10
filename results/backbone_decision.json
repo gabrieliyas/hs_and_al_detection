@@ -1,1 +1,177 @@
-{"decision":"xlmr"}
+{
+  "c_best_by_backbone": {
+    "indobertweet": 1,
+    "xlmr": 2
+  },
+  "c_best_predictions_verified": {
+    "indobertweet": 1,
+    "xlmr": 2
+  },
+  "concordant_with_experiment1": true,
+  "context_decisions": {
+    "indobertweet": {
+      "backbone": "indobertweet",
+      "ci_level": 95.0,
+      "context_rule_version": "paired-oof-depth-tradeoff-v2",
+      "interpretation_note": "A CI containing zero means the data did not resolve a gain at the chosen confidence level; it does not establish equivalence.",
+      "n_bootstrap": 10000,
+      "n_oof_examples": 900,
+      "paired_comparisons_top_minus_shallower": {
+        "C2_minus_C0": {
+          "ci_level": 95.0,
+          "ci_lower": 0.010152824750032069,
+          "ci_upper": 0.04986439345795475,
+          "includes_zero": false,
+          "n_bootstrap": 10000,
+          "observed_diff": 0.029831811330821356,
+          "significant": true
+        },
+        "C2_minus_C1": {
+          "ci_level": 95.0,
+          "ci_lower": -0.00012327159255147988,
+          "ci_upper": 0.028915489735218652,
+          "includes_zero": true,
+          "n_bootstrap": 10000,
+          "observed_diff": 0.014356360959770997,
+          "significant": false
+        }
+      },
+      "pooled_oof_macro_f1": {
+        "C0": 0.8845289517390277,
+        "C1": 0.900004402110078,
+        "C2": 0.914360763069849,
+        "C3": 0.9110818588759625,
+        "C4": 0.9087295691440641
+      },
+      "post_id_sha256": "5d31ac867f84b7a612e318eb72bbcf7d4ddac35297ada9b6709178b847ed5ea6",
+      "provisional_top_context": 2,
+      "run_id": "left_truncation_v2",
+      "schema_version": "thesis-run-config-v3",
+      "seed_count_by_context": {
+        "C0": 2,
+        "C1": 2,
+        "C2": 2,
+        "C3": 2,
+        "C4": 2
+      },
+      "selected_context": 1,
+      "selected_experiment2_id": "E2-IndoBERTweet-ITFT-C1",
+      "selected_experiment3_id": "E3-IndoBERTweet-C1",
+      "selection_reason": "tradeoff_C1_CI_includes_zero_vs_C2"
+    },
+    "xlmr": {
+      "backbone": "xlmr",
+      "ci_level": 95.0,
+      "context_rule_version": "paired-oof-depth-tradeoff-v2",
+      "interpretation_note": "A CI containing zero means the data did not resolve a gain at the chosen confidence level; it does not establish equivalence.",
+      "n_bootstrap": 10000,
+      "n_oof_examples": 900,
+      "paired_comparisons_top_minus_shallower": {
+        "C4_minus_C0": {
+          "ci_level": 95.0,
+          "ci_lower": 0.01924078851785444,
+          "ci_upper": 0.06275784395256505,
+          "includes_zero": false,
+          "n_bootstrap": 10000,
+          "observed_diff": 0.04027797064972827,
+          "significant": true
+        },
+        "C4_minus_C1": {
+          "ci_level": 95.0,
+          "ci_lower": -0.0017237192936360472,
+          "ci_upper": 0.03525569767179844,
+          "includes_zero": true,
+          "n_bootstrap": 10000,
+          "observed_diff": 0.016792822492698423,
+          "significant": false
+        },
+        "C4_minus_C2": {
+          "ci_level": 95.0,
+          "ci_lower": -0.013847372346121106,
+          "ci_upper": 0.016713299516688807,
+          "includes_zero": true,
+          "n_bootstrap": 10000,
+          "observed_diff": 0.0011493221644175433,
+          "significant": false
+        },
+        "C4_minus_C3": {
+          "ci_level": 95.0,
+          "ci_lower": -0.00952819414448336,
+          "ci_upper": 0.01811476795699219,
+          "includes_zero": true,
+          "n_bootstrap": 10000,
+          "observed_diff": 0.004480865553959101,
+          "significant": false
+        }
+      },
+      "pooled_oof_macro_f1": {
+        "C0": 0.8708177435453343,
+        "C1": 0.8943028917023641,
+        "C2": 0.909946392030645,
+        "C3": 0.9066148486411034,
+        "C4": 0.9110957141950625
+      },
+      "post_id_sha256": "5d31ac867f84b7a612e318eb72bbcf7d4ddac35297ada9b6709178b847ed5ea6",
+      "provisional_top_context": 4,
+      "run_id": "left_truncation_v2",
+      "schema_version": "thesis-run-config-v3",
+      "seed_count_by_context": {
+        "C0": 2,
+        "C1": 2,
+        "C2": 2,
+        "C3": 2,
+        "C4": 2
+      },
+      "selected_context": 2,
+      "selected_experiment2_id": "E2-XLMR-ITFT-C2",
+      "selected_experiment3_id": "E3-XLMR-C2",
+      "selection_reason": "tradeoff_C2_CI_includes_zero_vs_C4"
+    }
+  },
+  "context_rule_version": "paired-oof-depth-tradeoff-v2",
+  "decision": "indobertweet",
+  "difference": "xlmr minus indobertweet",
+  "exp1_leader": "indobertweet",
+  "guard_c0": {
+    "ci_level": 95.0,
+    "ci_lower": -0.035048966386723175,
+    "ci_upper": 0.007131328062948174,
+    "n_bootstrap": 10000,
+    "observed_diff": -0.013711208193693425,
+    "significant": false
+  },
+  "guard_ok": null,
+  "latency_machine": "Linux x86_64 | CUDA:Tesla T4 | PyTorch 2.11.0+cu130",
+  "latency_ms": {
+    "indobertweet": 8.719884000129241,
+    "xlmr": 8.773590000146214
+  },
+  "latency_relative_difference": 0.006159026887992676,
+  "latency_tolerance": 0.1,
+  "leader_before_guard": null,
+  "n_oof_examples": 900,
+  "post_id_sha256": "5d31ac867f84b7a612e318eb72bbcf7d4ddac35297ada9b6709178b847ed5ea6",
+  "primary_c_best": {
+    "ci_level": 95.0,
+    "ci_lower": -0.009579818296010456,
+    "ci_upper": 0.029675404903081796,
+    "n_bootstrap": 10000,
+    "observed_diff": 0.00994198992056694,
+    "significant": false
+  },
+  "primary_outcome": "not_significant",
+  "reason": "default_indobertweet",
+  "rule_version": "v3-paired-context-and-latency-gate",
+  "run_id": "left_truncation_v2",
+  "schema_version": "thesis-run-config-v3",
+  "source_grid_fingerprints": {
+    "indobertweet": "11e46860bbd89451eb5586c7bff3e063e44f3d81d6b15e0cb5634101f24b063b",
+    "xlmr": "564470bd447c56ba56614216686c1c12e500d862c2fc1ec61a40aacaf8062f9d"
+  },
+  "source_grid_run_counts": {
+    "indobertweet": 50,
+    "xlmr": 50
+  },
+  "stage11_manifest_fingerprint": "1e59d379424e20d06577b62fce711e0c7b199e0e22fea0c8d84bd27bbd862899",
+  "stage11_output_dir": "results/runs/left_truncation_v2/stage_11/decision"
+}
