@@ -46,6 +46,7 @@ import re
 import sys
 import tempfile
 import time
+import warnings
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -1033,11 +1034,34 @@ def main(argv: Sequence[str] | None = None) -> None:
     spec = eu.get_backbone(backbone)
     tokenizer_revision = audit["tokenizer_revisions"][backbone]
     model_revision = audit["model_revisions"][backbone]
-    tokenizer = AutoTokenizer.from_pretrained(spec.hf_model_id, revision=tokenizer_revision, use_fast=True)
+    # Keep the tokenizer revision explicitly pinned at load time. Some
+    # Transformers/tokenizer implementations do not expose the resolved
+    # commit in `_commit_hash` or `init_kwargs`, so absence of that metadata
+    # is a warning rather than evidence of a revision mismatch.
+    tokenizer = AutoTokenizer.from_pretrained(
+        spec.hf_model_id,
+        revision=tokenizer_revision,
+        use_fast=True,
+    )
     eu.configure_tokenizer_for_input(tokenizer, INPUT_MODE)
-    resolved_tokenizer_revision = getattr(tokenizer, "_commit_hash", None) or (getattr(tokenizer, "init_kwargs", {}) or {}).get("_commit_hash")
-    if not resolved_tokenizer_revision or str(resolved_tokenizer_revision).lower() != tokenizer_revision.lower():
-        raise RuntimeError(f"Tokenizer for {backbone} resolved to {resolved_tokenizer_revision!r}, expected {tokenizer_revision!r}")
+    resolved_tokenizer_revision = (
+        getattr(tokenizer, "_commit_hash", None)
+        or (getattr(tokenizer, "init_kwargs", {}) or {}).get("_commit_hash")
+    )
+    if resolved_tokenizer_revision is None:
+        warnings.warn(
+            f"Tokenizer for {backbone} did not expose its resolved commit hash. "
+            f"The explicitly requested revision was {tokenizer_revision!r}; "
+            "the loaded snapshot could not be independently verified through "
+            "tokenizer metadata.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    elif str(resolved_tokenizer_revision).lower() != tokenizer_revision.lower():
+        raise RuntimeError(
+            f"Tokenizer for {backbone} resolved to "
+            f"{resolved_tokenizer_revision!r}, expected {tokenizer_revision!r}"
+        )
     if tokenizer.truncation_side != TRUNCATION_SIDE:
         raise RuntimeError(f"Contextual inputs require tokenizer.truncation_side={TRUNCATION_SIDE!r}")
 
