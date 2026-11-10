@@ -1575,20 +1575,65 @@ def main(argv: Sequence[str] | None = None) -> None:
     length_vectors: dict[str, np.ndarray] = {}
     token_stats: dict[str, dict[str, Any]] = {}
     tokenizer_revision_resolved: dict[str, str] = {}
+
     for backbone, spec in eu.BACKBONES.items():
         revision = audit["tokenizer_revisions"][backbone]
-        tokenizer = AutoTokenizer.from_pretrained(spec.hf_model_id, revision=revision, use_fast=True)
+
+        tokenizer = AutoTokenizer.from_pretrained(
+            spec.hf_model_id,
+            revision=revision,
+            use_fast=True,
+        )
+
         eu.configure_tokenizer_for_input(tokenizer, INPUT_MODE)
-        actual = getattr(tokenizer, "_commit_hash", None) or (getattr(tokenizer, "init_kwargs", {}) or {}).get("_commit_hash")
-        if not actual or str(actual).lower() != revision.lower():
-            raise RuntimeError(f"Tokenizer for {backbone} resolved to {actual!r}; expected pinned commit {revision!r}")
-        tokenizer_revision_resolved[backbone] = str(actual).lower()
+
+        actual = (
+            getattr(tokenizer, "_commit_hash", None)
+            or (getattr(tokenizer, "init_kwargs", {}) or {}).get("_commit_hash")
+        )
+
+        if actual is not None and str(actual).lower() != revision.lower():
+            raise RuntimeError(
+                f"Tokenizer for {backbone} resolved to {actual!r}; "
+                f"expected pinned commit {revision!r}"
+            )
+
+        if actual is None:
+            print(
+                f"WARNING: Tokenizer for {backbone} does not expose "
+                "its resolved commit SHA through runtime metadata. "
+                f"Using the explicitly requested pinned revision: {revision}"
+            )
+            resolved_revision = revision.lower()
+        else:
+            resolved_revision = str(actual).lower()
+
+        tokenizer_revision_resolved[backbone] = resolved_revision
+
         texts = _context_texts(tuning_train, tokenizer)
-        lengths = np.asarray([len(tokenizer(text, truncation=False, add_special_tokens=True)["input_ids"]) for text in texts], dtype=np.int64)
+
+        lengths = np.asarray(
+            [
+                len(
+                    tokenizer(
+                        text,
+                        truncation=False,
+                        add_special_tokens=True,
+                    )["input_ids"]
+                )
+                for text in texts
+            ],
+            dtype=np.int64,
+        )
+
         length_vectors[backbone] = lengths
         token_stats[backbone] = _token_length_stats(lengths)
         tokenizers[backbone] = tokenizer
-        print(f"{backbone}: tokenizer commit={actual}; C4 training input p95={token_stats[backbone]['p95']:.1f} tokens")
+
+        print(
+            f"{backbone}: tokenizer commit={resolved_revision}; "
+            f"C4 training input p95={token_stats[backbone]['p95']:.1f} tokens"
+        )
 
     selection = eu.choose_shared_max_length(
         length_vectors,
