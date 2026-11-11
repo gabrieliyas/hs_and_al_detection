@@ -13,7 +13,85 @@
     "indobertweet": 0.021653764164703243,
     "xlmr": 0.035678222820599126
   },
+  "context_fold_assignment_sha256": "9434f3bdcc2a3222554a90928c1a846cca0de8bf17f619f1d424290674f31824",
+  "context_hard_cap_hit": false,
+  "context_length_excluded_cv_fold": 0,
+  "context_length_fold_assignment_sha256": "9434f3bdcc2a3222554a90928c1a846cca0de8bf17f619f1d424290674f31824",
+  "context_length_input_policy": "C4 inputs from the 80% training split of rows with fold != 0; excludes tuning validation and fold-0 held-out examples",
+  "context_length_percentile": 95.0,
+  "context_length_percentile_tokens": {
+    "indobertweet": 143.5,
+    "xlmr": 175.25
+  },
+  "context_length_source_partition": "contextual_c4",
+  "context_length_training_post_ids_sha256": "edfc0d1c84f907be299cc66bb841351e0a2023ee2a3878d23f8009b57f43eb88",
+  "context_length_training_rows": 576,
+  "context_length_validation_post_ids_sha256": "ecb2beca55f4827f493223df9e3f616a0483e0fcedef233f5c9aa7f96b8ff7b1",
+  "context_length_validation_rows": 144,
+  "context_matched_csv_sha256": "185ef9996819d52f0174e1bbd62cd2b50d03bfbe09158378ca8854aec339d445",
+  "context_pilot_manifest_fingerprints": {
+    "lr_trials": {
+      "indobertweet": {
+        "1e-05": "c0662fe8d10e11519c45f355a07d71d16899109f33e44aa32a8ec122d7ffed9e",
+        "2e-05": "19e58ea7b18d186efaa36ea9bbad06ef12948f675c17e856e07d4def4ca7cf40",
+        "3e-05": "4450bcf1bcd8812c2f64c260ffa1a13ceed9b3bab7b5027e8995a568d4c5c431",
+        "5e-05": "188d10171608222e0527b77288499b927a8b15f9adbb1150600be4b7ff52fd74"
+      },
+      "xlmr": {
+        "1e-05": "a286c16213a2b274d799c89de37157f5ccc9eda1d9fc9c9977879248f3410bb6",
+        "2e-05": "53139e3c32bb671abc1a402dd424ba9e55250557eb1f40f7102dcbce3925934c",
+        "3e-05": "5f0233adf25245353e5ea61da9270f8636900a73535ba5dbe85d7460be75f9f9",
+        "5e-05": "4fd301528946199fdae75b846145759b5ad858ff1c34492b956174bc0473f698"
+      }
+    },
+    "timing_only": {
+      "indobertweet": "9872d36b6d69fdd735189b4c933816d50e0dc3229e67a53a039e6afef4032eb3",
+      "xlmr": "d26bb30751d9d8dba1847a77f54fc7c5bdaab2757901f3f36281eaaf2e5ddeeb"
+    }
+  },
+  "context_pilot_script": "scripts/8_timing_pilot.py",
+  "context_pilot_script_sha256": "6ed20bc28af91d87c70cd754c6961f092d04f29640ba0ca743c8315523ad6990",
+  "context_pilot_utility_sha256": "4782050e4aeded07252d1d89465e021a9b6dc0d1368891f40c89039b1e480b91",
+  "context_token_length_stats": {
+    "indobertweet": {
+      "max": 292,
+      "mean": 81.69965277777777,
+      "median": 79.0,
+      "min": 29,
+      "n": 576,
+      "p90": 114.0,
+      "p95": 143.5,
+      "p99": 210.75
+    },
+    "xlmr": {
+      "max": 358,
+      "mean": 99.31423611111111,
+      "median": 97.0,
+      "min": 31,
+      "n": 576,
+      "p90": 139.5,
+      "p95": 175.25,
+      "p99": 247.0
+    }
+  },
+  "context_tokenizer_model_ids": {
+    "indobertweet": "indolem/indobertweet-base-uncased",
+    "xlmr": "FacebookAI/xlm-roberta-base"
+  },
+  "context_tokenizer_resolved_revisions": {
+    "indobertweet": "32e28c05b47e33b6675d2670a1745c50a65e987a",
+    "xlmr": "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089"
+  },
+  "context_truncation_rate_at_max_length": {
+    "indobertweet": 0.026041666666666668,
+    "xlmr": 0.04861111111111111
+  },
+  "contextual_learning_rates": {
+    "indobertweet": 5e-05,
+    "xlmr": 3e-05
+  },
   "max_length_benchmark": 80,
+  "max_length_context": 176,
   "run_id": "left_truncation_v2",
   "schema_version": "thesis-run-config-v3",
   "selection_script": "1b_select_benchmark_max_length.py",

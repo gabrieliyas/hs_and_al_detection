@@ -51,9 +51,112 @@
       "5e-05": 0.20598166907863
     }
   },
+  "context_preflight": {
+    "benchmark_learning_rate_config_sha256_before_context_merge": "ee5d5faf7c5be18fa781777cdb89d1c749bbae39211a64799e4ccb8d397baa0c",
+    "benchmark_sequence_config_sha256_before_context_merge": "802645dd80d6e0b34cd96141d0237f34b5ace495aaf5201304058f0eb7a4472a",
+    "context_length_source_partition": "contextual_c4",
+    "contextual_matched_csv_sha256": "185ef9996819d52f0174e1bbd62cd2b50d03bfbe09158378ca8854aec339d445",
+    "excluded_cv_test_fold": 0,
+    "fold_assignment_sha256": "9434f3bdcc2a3222554a90928c1a846cca0de8bf17f619f1d424290674f31824",
+    "fold_column": "fold",
+    "hyperparameters": {
+      "checkpoint_metric": "macro_f1",
+      "effective_batch_size": 16,
+      "gradient_accumulation_steps": 1,
+      "loss": "unweighted_cross_entropy",
+      "lr_scheduler": "linear",
+      "max_epochs": 8,
+      "mixed_precision": true,
+      "optimizer": "AdamW",
+      "per_device_eval_batch_size": 32,
+      "per_device_train_batch_size": 16,
+      "warmup_ratio": 0.0,
+      "weight_decay": 0.01
+    },
+    "input_partition": "fold0_cv_training_portion_split_80_20",
+    "itft_manifest_fingerprints": {
+      "indobertweet": "94a9f1baf6b392896132b82a23acc596e5cf498a13d7b9c31acb15fb35efc90a",
+      "xlmr": "c10c2b859f229521fdd736791a8cea573b3360e281935ed702aaa3fa014390bb"
+    },
+    "latency_measurement_artifact": "/kaggle/working/hs_and_al_detection/results/runs/left_truncation_v2/stage_08/summary/context_latency_measurements.json",
+    "latency_measurement_machine": "Linux x86_64 | CUDA:Tesla T4 | PyTorch 2.11.0+cu130",
+    "latency_measurement_manifest_fingerprints": {
+      "indobertweet": "94a9f1baf6b392896132b82a23acc596e5cf498a13d7b9c31acb15fb35efc90a",
+      "xlmr": "c10c2b859f229521fdd736791a8cea573b3360e281935ed702aaa3fa014390bb"
+    },
+    "latency_measurement_repeats_per_backbone_context": 30,
+    "latency_median_ms_by_context": {
+      "C0": {
+        "indobertweet": 8.540050999272353,
+        "xlmr": 8.789974999672268
+      },
+      "C1": {
+        "indobertweet": 8.719884000129241,
+        "xlmr": 9.091647999866836
+      },
+      "C2": {
+        "indobertweet": 8.746043000428472,
+        "xlmr": 8.773590000146214
+      },
+      "C3": {
+        "indobertweet": 8.758574500006944,
+        "xlmr": 9.385626500261424
+      },
+      "C4": {
+        "indobertweet": 8.85939249974399,
+        "xlmr": 9.326389500074583
+      }
+    },
+    "lr_tuning_seed": 314159,
+    "max_length_context": 176,
+    "model_ids": {
+      "indobertweet": "indolem/indobertweet-base-uncased",
+      "xlmr": "FacebookAI/xlm-roberta-base"
+    },
+    "model_revisions": {
+      "indobertweet": "32e28c05b47e33b6675d2670a1745c50a65e987a",
+      "xlmr": "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089"
+    },
+    "selection_rule": "highest validation macro-F1; exact ties go to the smaller learning rate",
+    "timing_only_seconds": {
+      "indobertweet": 114.089,
+      "xlmr": 146.08
+    },
+    "tokenizer_revisions": {
+      "indobertweet": "32e28c05b47e33b6675d2670a1745c50a65e987a",
+      "xlmr": "e73636d4f797dec63c3081bb6ed5c7b0bb3f2089"
+    },
+    "total_trial_count": 8,
+    "training_post_ids_sha256": "edfc0d1c84f907be299cc66bb841351e0a2023ee2a3878d23f8009b57f43eb88",
+    "training_rows": 576,
+    "trial_count_per_backbone": 4,
+    "truncation_side": "left",
+    "uses_fold0_held_out": false,
+    "validation_metric": "macro_f1",
+    "validation_post_ids_sha256": "ecb2beca55f4827f493223df9e3f616a0483e0fcedef233f5c9aa7f96b8ff7b1",
+    "validation_rows": 144
+  },
+  "context_trial_macro_f1": {
+    "indobertweet": {
+      "1e-05": 0.8818615482003979,
+      "2e-05": 0.9380139152435167,
+      "3e-05": 0.9380139152435167,
+      "5e-05": 0.9517183217372972
+    },
+    "xlmr": {
+      "1e-05": 0.8885620915032679,
+      "2e-05": 0.9235743959483805,
+      "3e-05": 0.9308404829708633,
+      "5e-05": 0.9168450597022026
+    }
+  },
   "learning_rate_benchmark": {
     "indobertweet": 5e-05,
     "xlmr": 2e-05
+  },
+  "learning_rate_context": {
+    "indobertweet": 5e-05,
+    "xlmr": 3e-05
   },
   "lr_search_grid": [
     1e-05,
