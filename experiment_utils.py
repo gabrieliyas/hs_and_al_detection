@@ -588,7 +588,6 @@ def check_config_parity(
     cfg_b: Mapping,
     *,
     input_mode: str | None = None,
-    exclude_keys: Sequence[str] = (),
 ) -> None:
     """Audit two backbone configs against the same-stage fairness contract.
 
@@ -614,13 +613,6 @@ def check_config_parity(
         "class_weighting_benchmark", "checkpoint_metric", "lr_search_grid",
         "lr_tuning_seed", "mixed_precision", "input_order", "truncation_side",
     )
-    excluded = set(exclude_keys)
-    unknown_exclusions = excluded - set(common_required)
-    if unknown_exclusions:
-        raise ValueError(
-            f"check_config_parity: cannot exclude unknown or "
-            f"non-common keys {sorted(unknown_exclusions)}"
-        )
     mode_required = (
         ("max_length_benchmark", "split_assignment_sha256")
         if mode == "target_only"
@@ -631,11 +623,7 @@ def check_config_parity(
         if mode == "target_only"
         else BACKBONE_SPECIFIC_KEYS
     )
-    required = (
-        tuple(key for key in common_required if key not in excluded)
-        + mode_required
-        + backbone_specific_required
-    )
+    required = common_required + mode_required + backbone_specific_required
     missing = sorted({k for cfg in (cfg_a, cfg_b) for k in required if k not in cfg})
     if missing:
         raise KeyError(f"check_config_parity: missing key(s) {missing}")
@@ -665,11 +653,7 @@ def check_config_parity(
                 raise ValueError(f"{name}: contextual CV requires 5 folds and seeds {CV_SEEDS}")
 
     # Fields shared between backbones for the current input mode.
-    parity_keys = (
-        [key for key in common_required if key not in excluded]
-        + list(mode_required)
-        + ["truncation_side"]
-    )
+    parity_keys = list(common_required) + list(mode_required) + ["truncation_side"]
     problems = {
         k: (cfg_a[k], cfg_b[k])
         for k in parity_keys
