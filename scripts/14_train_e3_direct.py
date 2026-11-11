@@ -47,6 +47,7 @@ import re
 import sys
 import tempfile
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -1096,6 +1097,30 @@ def _make_training_args(TrainingArguments, *, output_dir: Path, config: Mapping[
     return TrainingArguments(**kwargs)
 
 
+_SNAPSHOT_COMMIT_PATTERN = re.compile(r"snapshots[\\/]([0-9a-fA-F]{40})(?:[\\/]|$)")
+
+
+def _snapshot_commit_from_path(path: str | os.PathLike[str]) -> str | None:
+    """Return the commit hash from a Hugging Face cache path ``.../snapshots/<sha>/<file>``."""
+    match = _SNAPSHOT_COMMIT_PATTERN.search(str(path))
+    return match.group(1).lower() if match else None
+
+
+@lru_cache(maxsize=None)
+def _resolve_snapshot_commit(repo_id: str, revision: str) -> str | None:
+    """Commit hash the Hub cache used for ``repo_id`` at ``revision``.
+
+    Read from the cached ``config.json`` path rather than from
+    ``tokenizer._commit_hash``: some transformers versions leave that private
+    attribute unset on tokenizers, which made the pin check fail even though the
+    pinned files had been downloaded.
+    """
+    from huggingface_hub import hf_hub_download
+
+    cached_file = hf_hub_download(repo_id=repo_id, filename="config.json", revision=revision)
+    return _snapshot_commit_from_path(cached_file)
+
+
 def _load_training_dependencies():
     try:
         import torch
@@ -1296,7 +1321,10 @@ def _train_run(
     )
     if getattr(model.config, "num_labels", None) != len(eu.LABEL2ID):
         raise RuntimeError("Loaded base checkpoint does not expose the expected three-class classification head")
-    resolved_model_revision = getattr(model.config, "_commit_hash", None)
+    resolved_model_revision = (
+        getattr(model.config, "_commit_hash", None)
+        or _resolve_snapshot_commit(spec.hf_model_id, audit["model_revisions"][audit["backbone"]])
+    )
     if not resolved_model_revision or str(resolved_model_revision).lower() != audit["model_revisions"][audit["backbone"]]:
         raise RuntimeError(f"Base model resolved to revision {resolved_model_revision!r}; expected {audit['model_revisions'][audit['backbone']]!r}")
     # The selected model was loaded directly from the pinned public base model;
@@ -1661,7 +1689,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     tokenizer_revision = audit["tokenizer_revisions"][audit["backbone"]]
     tokenizer = AutoTokenizer.from_pretrained(spec.hf_model_id, revision=tokenizer_revision, use_fast=True)
     eu.configure_tokenizer_for_input(tokenizer, INPUT_MODE)
-    resolved_tokenizer_revision = getattr(tokenizer, "_commit_hash", None) or (getattr(tokenizer, "init_kwargs", {}) or {}).get("_commit_hash")
+    resolved_tokenizer_revision = (
+        getattr(tokenizer, "_commit_hash", None)
+        or (getattr(tokenizer, "init_kwargs", {}) or {}).get("_commit_hash")
+        or _resolve_snapshot_commit(spec.hf_model_id, tokenizer_revision)
+    )
     if not resolved_tokenizer_revision or str(resolved_tokenizer_revision).lower() != tokenizer_revision:
         raise RuntimeError(f"Tokenizer resolved to {resolved_tokenizer_revision!r}; expected pinned revision {tokenizer_revision!r}")
 
