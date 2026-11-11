@@ -1183,11 +1183,22 @@ def _validate_prerequisites(root: Path = PROJECT_ROOT) -> dict[str, Any]:
     e2_cfg = e2_manifest.get("config")
     if not isinstance(e2_cfg, Mapping):
         raise ValueError("Selected E2 C0 reference run does not contain a resolved config")
+    # Stage 14 uses fixed-epoch training, whereas the E2 reference
+    # configuration includes the early-stopping parameter.
+    # Neutralize this E2-only field in temporary comparison copies.
+    # The actual resolved configurations remain unchanged.
+    e2_parity_cfg = dict(e2_cfg)
+    direct_parity_cfg = dict(direct_cfg)
+
+    not_applicable = "__not_applicable_for_e3_fixed_epoch_training__"
+
+    e2_parity_cfg["early_stopping_patience"] = not_applicable
+    direct_parity_cfg["early_stopping_patience"] = not_applicable
+
     eu.check_config_parity(
-        e2_cfg,
-        direct_cfg,
+        e2_parity_cfg,
+        direct_parity_cfg,
         input_mode=INPUT_MODE,
-        exclude_keys=("early_stopping_patience",),
     )
 
     stage_root, root_manifest = _prepare_root_manifest(audit, root=root)
