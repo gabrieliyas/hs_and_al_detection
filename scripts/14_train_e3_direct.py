@@ -40,6 +40,7 @@ reference runs.
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 import math
 import os
@@ -1094,6 +1095,29 @@ def _make_training_args(TrainingArguments, *, output_dir: Path, config: Mapping[
         "dataloader_num_workers": 0,
         "remove_unused_columns": True,
     }
+    # Newer transformers releases no longer accept some TrainingArguments keys
+    # (transformers 5.20.2 rejects warmup_ratio). An unsupported key may be
+    # omitted only when its configured value equals the library default, so
+    # omitting it cannot change training; any other value fails loudly instead
+    # of being ignored silently.
+    parameters = inspect.signature(TrainingArguments.__init__).parameters
+    default_equivalents: dict[str, Any] = {
+        "warmup_ratio": 0.0,
+        "lr_scheduler_type": "linear",
+        "data_seed": kwargs["seed"],  # the Trainer falls back to seed when data_seed is unset
+    }
+    for key, default_value in default_equivalents.items():
+        if key in parameters:
+            continue
+        if kwargs[key] != default_value:
+            raise RuntimeError(
+                f"The installed transformers does not accept TrainingArguments({key}=...) and the configured value "
+                f"{kwargs[key]!r} differs from the library default {default_value!r}; omitting it would change training. "
+                "Use the transformers version the earlier stages used, or adapt this function deliberately."
+            )
+        del kwargs[key]
+    if "disable_tqdm" not in parameters:
+        del kwargs["disable_tqdm"]  # cosmetic only
     return TrainingArguments(**kwargs)
 
 
