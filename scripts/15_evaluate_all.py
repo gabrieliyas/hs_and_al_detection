@@ -28,11 +28,13 @@ pipeline audit passes:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -329,7 +331,56 @@ def build_oof_arrays(
     }
 
 
-def _verify_manifest_inputs(manifest: Mapping[str, Any], *, root: Path) -> None:
+def _stage6_amended_metrics_sha(metrics_path: Path) -> str | None:
+    """SHA-256 of a Stage 6/7 metrics.json after `manifest_fingerprint` is appended.
+
+    The revised 6_train_itft.py writes `{**metrics, "manifest_fingerprint": ...}`
+    so that Stage 12 can bind the report to its run manifest. Stage 12 recorded
+    that form, while Stages 8-9 recorded the original file. The amended form is
+    rebuilt here from the live file and the live Stage 6 manifest fingerprint,
+    so only this single added key is accepted as a difference.
+    """
+    manifest_path = metrics_path.parent / eu.RUN_MANIFEST_NAME
+    if metrics_path.name != "metrics.json" or not manifest_path.is_file():
+        return None
+    fingerprint = _read_json(manifest_path).get("fingerprint")
+    metrics = _read_json(metrics_path)
+    if not fingerprint or "manifest_fingerprint" in metrics:
+        return None
+    amended = {**metrics, "manifest_fingerprint": fingerprint}
+    return hashlib.sha256((json.dumps(amended, indent=2) + "\n").encode("utf-8")).hexdigest()
+
+
+def _is_itft_stage_path(path: Path) -> bool:
+    parts = path.as_posix().split("/")
+    return any(part in {"stage_06", "stage_07"} for part in parts[:-2]) and parts[-2].startswith("itft_")
+
+
+def _itft_report_amendment_ok(
+    path: Path, relative: str, expected: str, input_hashes: Mapping[str, Any],
+) -> bool:
+    """Accept the documented post-hoc `manifest_fingerprint` amendment, and only it."""
+    if not _is_itft_stage_path(path):
+        return False
+    if path.name == "metrics.json":
+        return _stage6_amended_metrics_sha(path) == expected
+    if path.name == "artifacts_sha256.json":
+        # The index lists metrics.json's hash, so it changes with it. It is accepted
+        # only when the same manifest recorded the amended metrics.json.
+        sibling = str(relative).replace("\\", "/").rsplit("/", 1)[0] + "/metrics.json"
+        recorded = {str(k).replace("\\", "/"): v for k, v in input_hashes.items()}
+        return _stage6_amended_metrics_sha(path.parent / "metrics.json") == recorded.get(sibling)
+    return False
+
+
+def _verify_manifest_inputs(
+    manifest: Mapping[str, Any], *, root: Path, skip_names: Sequence[str] = (),
+) -> None:
+    """Check recorded input hashes against the live files.
+
+    `skip_names` lists file names whose live hash is verified elsewhere (only the
+    shared configs that Stage 8 amends after recording its own inputs).
+    """
     input_hashes = manifest.get("input_sha256")
     if not isinstance(input_hashes, Mapping):
         raise ValueError("Run manifest has no input_sha256 map")
@@ -338,7 +389,9 @@ def _verify_manifest_inputs(manifest: Mapping[str, Any], *, root: Path) -> None:
         path = path if path.is_absolute() else root / path
         if not path.is_file():
             raise FileNotFoundError(f"Manifest input is missing: {path}")
-        if _sha(path) != expected:
+        if path.name in skip_names:
+            continue
+        if _sha(path) != expected and not _itft_report_amendment_ok(path, str(relative), str(expected), input_hashes):
             raise ValueError(f"Input hash mismatch for {path}; upstream artifact changed")
 
 
@@ -367,7 +420,7 @@ def _verify_stage_root(
     *, stage_dir: Path, stage: int, script_name: str,
     required_files: Sequence[str], marker_name: str | None = None,
     index_name: str = "artifacts_sha256.json", check_input_hashes: bool = True, check_index_paths: bool = True,
-    check_index_script_name: bool = True,
+    check_index_script_name: bool = True, skip_input_names: Sequence[str] = (),
 ) -> dict[str, Any]:
     manifest_path = stage_dir / eu.RUN_MANIFEST_NAME
     index_path = stage_dir / index_name
@@ -388,7 +441,7 @@ def _verify_stage_root(
         expected_script=script_name, expected_fingerprint=fingerprint,
     )
     if check_input_hashes:
-        _verify_manifest_inputs(manifest, root=PROJECT_ROOT)
+        _verify_manifest_inputs(manifest, root=PROJECT_ROOT, skip_names=skip_input_names)
     expected_identity = {
         "schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID,
         "stage": stage, "script_name": script_name, "manifest_fingerprint": fingerprint,
@@ -408,10 +461,38 @@ def _verify_stage_root(
     return {"dir": stage_dir, "manifest": manifest, "fingerprint": fingerprint, "index": index, "marker": marker}
 
 
+def _check_benchmark_values_unchanged(metrics_path: Path, backbone: str) -> None:
+    """Confirm an Experiment I run used the benchmark values now in the shared configs.
+
+    The shared config files were amended after Experiments I ran (context fields
+    only). Skipping their input hash is therefore safe only while the benchmark
+    learning rate and maximum length recorded by the run still equal the live ones.
+    Keys absent from the run's metrics are not compared.
+    """
+    metrics = _read_json(metrics_path)
+    lr_doc = _read_json(LR_CONFIG_PATH)
+    seq_doc = _read_json(SEQUENCE_CONFIG_PATH)
+    live_lr = lr_doc["learning_rate_benchmark"][backbone]
+    live_len = seq_doc["max_length_benchmark"]
+    if "learning_rate_benchmark" in metrics and not math.isclose(
+        float(metrics["learning_rate_benchmark"]), float(live_lr), rel_tol=1e-12,
+    ):
+        raise ValueError(
+            f"{metrics_path}: learning_rate_benchmark {metrics['learning_rate_benchmark']} "
+            f"differs from learning_rates.json ({live_lr})"
+        )
+    if "max_length_benchmark" in metrics and int(metrics["max_length_benchmark"]) != int(live_len):
+        raise ValueError(
+            f"{metrics_path}: max_length_benchmark {metrics['max_length_benchmark']} "
+            f"differs from sequence_length.json ({live_len})"
+        )
+
+
 def _verify_leaf_run(
     *, run_dir: Path, stage: int, script_name: str,
     expected_identity: Mapping[str, Any], expected_artifacts: Sequence[str],
     marker_name: str | None = "run_complete.json", require_marker: bool = True,
+    skip_input_names: Sequence[str] = (),
 ) -> dict[str, Any]:
     manifest_path = run_dir / eu.RUN_MANIFEST_NAME
     index_path = run_dir / "artifacts_sha256.json"
@@ -427,7 +508,7 @@ def _verify_leaf_run(
     if str(manifest.get("stage")) != str(stage) or manifest.get("script_name") != script_name:
         raise ValueError(f"Run manifest identity mismatch in {run_dir}")
     eu.assert_current_run_artifact(run_dir / expected_artifacts[0], expected_stage=stage, expected_script=script_name, expected_fingerprint=fingerprint)
-    _verify_manifest_inputs(manifest, root=PROJECT_ROOT)
+    _verify_manifest_inputs(manifest, root=PROJECT_ROOT, skip_names=skip_input_names)
     identity = {
         "schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID,
         "stage": stage, "script_name": script_name,
@@ -580,7 +661,11 @@ def _load_e1_results(test_df: pd.DataFrame, stage5: Mapping[str, Any]) -> dict[s
                 expected_identity={},
                 expected_artifacts=("predictions.csv", "probabilities.npy", "metrics.json", "artifacts_sha256.json"),
                 marker_name=None, require_marker=False,
+                # Stage 8 later amended both shared configs (it only added the context
+                # fields). The benchmark values these runs used are re-checked below.
+                skip_input_names=("sequence_length.json", "learning_rates.json"),
             )
+            _check_benchmark_values_unchanged(run_dir / "metrics.json", backbone)
             run_config = leaf["manifest"].get("config", {})
             for key, expected in {"backbone": backbone, "seed": int(seed), "input_mode": "target_only"}.items():
                 if str(run_config.get(key)) != str(expected):
@@ -1371,12 +1456,10 @@ def _make_report_tables(*, upstream: Mapping[str, Any], data: Mapping[str, Any],
 
     stage2_fp = str(upstream["stage2_manifest"]["fingerprint"])
     stage1_fp = str(upstream["stage1_manifest"]["fingerprint"])
-    stage1b_fp = str(upstream["stage1b_manifest"]["fingerprint"])
     stage5_fp = str(upstream["stage5"]["fingerprint"])
     stage8_fp = str(upstream["stage8"]["fingerprint"])
     provenance_rows = [
         {"stage": 1, "artifact_group": "benchmark preprocessing", "path": "results/runs/left_truncation_v2/stage_01", "manifest_fingerprint": stage1_fp},
-        {"stage": "1b", "artifact_group": "benchmark sequence-length selection", "path": "results/runs/left_truncation_v2/stage_1b", "manifest_fingerprint": stage1b_fp},
         {"stage": 2, "artifact_group": "contextual preprocessing and folds", "path": "results/runs/left_truncation_v2/stage_02", "manifest_fingerprint": stage2_fp},
         {"stage": 5, "artifact_group": "Experiment I evaluation", "path": STAGE5_DIR.relative_to(PROJECT_ROOT).as_posix(), "manifest_fingerprint": stage5_fp},
         {"stage": 8, "artifact_group": "contextual config/latency", "path": STAGE8_DIR.relative_to(PROJECT_ROOT).as_posix(), "manifest_fingerprint": stage8_fp},
@@ -1611,7 +1694,9 @@ def _load_upstream(root: Path = PROJECT_ROOT) -> dict[str, Any]:
     # Verify benchmark preprocessing and max-length selection before treating
     # the prepared splits/configuration as authoritative inputs.
     stage1_manifest = eu.assert_current_stage_manifest(1, PROJECT_ROOT)
-    stage1b_manifest = eu.assert_current_stage_manifest("1b", PROJECT_ROOT)
+    # Stage 1b has no manifest: Stage 8 later amends sequence_length.json, so a
+    # Stage 1b manifest could not stay valid. Both shared-config files are instead
+    # checked against Stage 8's publication receipt below.
     # Verify preprocessing manifests before using dataset hashes as inputs.
     stage2_dir = RUN_ROOT / "stage_02"
     stage2_manifest_path = stage2_dir / eu.RUN_MANIFEST_NAME
@@ -1640,6 +1725,9 @@ def _load_upstream(root: Path = PROJECT_ROOT) -> dict[str, Any]:
         stage_dir=STAGE8_DIR, stage=8, script_name=eu.PIPELINE_SCRIPTS[8],
         required_files=("context_latency_measurements.json", "stage8_publish_receipt.json", "context_lr_trials.csv"),
         marker_name="stage8_complete.json", check_index_script_name=False,
+        # Stage 8 amends these two files after recording its inputs (adds the context
+        # fields). Their current hashes are verified against the publication receipt below.
+        skip_input_names=("sequence_length.json", "learning_rates.json"),
     )
     # Validate both frozen shared config files against the Stage 8 publication receipt.
     sequence_doc = eu.load_shared_run_config(
@@ -1663,8 +1751,7 @@ def _load_upstream(root: Path = PROJECT_ROOT) -> dict[str, Any]:
         raise ValueError("Stage 14 was trained using a different C_best than the saved Stage 11 decision")
 
     stage1_manifest_path = RUN_ROOT / "stage_01" / eu.RUN_MANIFEST_NAME
-    stage1b_manifest_path = RUN_ROOT / "stage_1b" / eu.RUN_MANIFEST_NAME
-    input_paths: list[Path] = [*required, stage1_manifest_path, stage1b_manifest_path, stage2_manifest_path]
+    input_paths: list[Path] = [*required, stage1_manifest_path, stage2_manifest_path]
     input_paths.extend([STAGE5_DIR / eu.RUN_MANIFEST_NAME, STAGE5_DIR / "artifacts_sha256.json", *[STAGE5_DIR / name for name in STAGE5_OUTPUTS]])
     input_paths.extend([STAGE8_DIR / name for name in (eu.RUN_MANIFEST_NAME, "stage8_complete.json", "artifacts_sha256.json", "stage8_publish_receipt.json", "context_latency_measurements.json", "context_lr_trials.csv")])
     input_paths.extend([STAGE11_DIR / name for name in (eu.RUN_MANIFEST_NAME, "stage11_complete.json", "artifacts_sha256.json", "backbone_decision.json", "context_selection_indobertweet.json", "context_selection_xlmr.json")])
@@ -1678,7 +1765,7 @@ def _load_upstream(root: Path = PROJECT_ROOT) -> dict[str, Any]:
         if not path.is_file():
             raise FileNotFoundError(f"Stage 15 provenance input is unavailable: {path}")
     return {
-        "data": data, "stage1_manifest": stage1_manifest, "stage1b_manifest": stage1b_manifest,
+        "data": data, "stage1_manifest": stage1_manifest,
         "stage2_manifest": stage2_manifest, "stage5": stage5, "stage8": stage8_dir_bundle,
         "stage11": stage11, "shared_config": sequence_doc, "e1": e1, "e2": e2, "e2b": e2b, "e3": e3,
         "input_paths": input_paths,
@@ -1707,13 +1794,35 @@ def _make_stage15_manifest(upstream: Mapping[str, Any], tables: Mapping[str, pd.
                                 input_paths=upstream["input_paths"], metadata=metadata, project_root=root)
 
 
+def _stage15_export_files() -> tuple[str, ...]:
+    """Names Stage 15 itself publishes into the shared tables folder."""
+    return (*TABLE_FILENAMES, "stage15_summary.json", "stage15_export_manifest.json")
+
+
+def _assert_export_dirs_free() -> None:
+    """Fail closed on a previous Stage 15 publication without touching other stages' files.
+
+    results/tables/<run_id>/ is shared: Stage 1b and Stage 2 also write their audit
+    tables there (and the Stage 2 manifest pins them by hash), so the folder is
+    not required to be empty. Only a collision with Stage 15's own output names
+    is an error. The figures folder is written by Stage 15 alone and must be empty.
+    """
+    collisions = [name for name in _stage15_export_files() if (TABLES_EXPORT_DIR / name).exists()]
+    if collisions:
+        raise FileExistsError(
+            f"{TABLES_EXPORT_DIR} already holds Stage 15 outputs: {', '.join(collisions)}. "
+            "Archive those files before a clean publication."
+        )
+    if FIGURES_EXPORT_DIR.exists() and any(FIGURES_EXPORT_DIR.iterdir()):
+        raise FileExistsError(
+            f"Stage 15 figure export directory is not empty: {FIGURES_EXPORT_DIR}. Archive prior outputs before publishing."
+        )
+
+
 def _publish_stage15(upstream: Mapping[str, Any], tables: Mapping[str, pd.DataFrame], report: Mapping[str, Any], *, stage_root_manifest: Mapping[str, Any], figure_source_dir: Path) -> None:
     # Never silently overwrite an earlier Stage 15 result bundle or canonical
     # decision: archive prior runs/exports before a deliberate fresh publication.
-    output_dirs = (TABLES_EXPORT_DIR, FIGURES_EXPORT_DIR)
-    for directory in output_dirs:
-        if directory.exists() and any(directory.iterdir()):
-            raise FileExistsError(f"Stage 15 report export directory is not empty: {directory}. Archive prior outputs before publishing.")
+    _assert_export_dirs_free()
     if STRATEGY_DECISION_PATH.exists():
         raise FileExistsError(f"Canonical strategy decision already exists: {STRATEGY_DECISION_PATH}. Archive it before a clean Stage 15 publication.")
 
@@ -1770,7 +1879,7 @@ def _publish_stage15(upstream: Mapping[str, Any], tables: Mapping[str, pd.DataFr
     _write_json_atomic(TABLES_EXPORT_DIR / "stage15_export_manifest.json", {
         "schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID, "stage": STAGE,
         "script_name": SCRIPT_NAME, "stage15_manifest_fingerprint": stage_root_manifest_fingerprint,
-        "files_sha256": {path.name: _sha(path) for path in sorted(TABLES_EXPORT_DIR.iterdir()) if path.is_file() and path.name != "stage15_export_manifest.json"},
+        "files_sha256": {name: _sha(TABLES_EXPORT_DIR / name) for name in (*TABLE_FILENAMES, "stage15_summary.json")},
     })
     _write_json_atomic(FIGURES_EXPORT_DIR / "stage15_export_manifest.json", {
         "schema_version": eu.CONFIG_SCHEMA_VERSION, "run_id": eu.RUN_ID, "stage": STAGE,
@@ -1861,10 +1970,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     # Make the report-only table/figure destinations fail closed on a stale run.
-    if TABLES_EXPORT_DIR.exists() and any(TABLES_EXPORT_DIR.iterdir()):
-        raise FileExistsError(f"{TABLES_EXPORT_DIR} is not empty; archive prior exports before publication")
-    if FIGURES_EXPORT_DIR.exists() and any(FIGURES_EXPORT_DIR.iterdir()):
-        raise FileExistsError(f"{FIGURES_EXPORT_DIR} is not empty; archive prior exports before publication")
+    _assert_export_dirs_free()
     if STAGE_ROOT.exists() and any(STAGE_ROOT.iterdir()):
         raise FileExistsError(f"{STAGE_ROOT} is not empty; archive the old Stage 15 bundle before publication")
     # Render charts in a temporary staging area so we can include the exact
