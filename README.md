@@ -213,8 +213,8 @@ Never flatten a run bundle or keep only its headline CSV. Downstream stages can 
 - [`experiment_protocol.md`](experiment_protocol.md) — experiment design and statistical/model-selection rules.
 - [`docs/COLAB_ARTIFACT_HANDOFF.md`](docs/COLAB_ARTIFACT_HANDOFF.md) — exact Colab upload/download checklist and retained artifact paths.
 - [`docs/stages/`](docs/stages/README.md) — focused runbooks for stages with special operational requirements.
-- `docs/annotation_guidelines.md` — class/annotation definitions, if present in the project.
-- `docs/dataset_split_and_weighting.md` — benchmark split and class-weighting decisions, if present in the project.
+- [`docs/annotation_guidelines.md`](docs/annotation_guidelines.md) — class/annotation definitions.
+- [`docs/dataset_split_and_weighting.md`](docs/dataset_split_and_weighting.md) — benchmark split and class-weighting decisions.
 
 ## Citation
 
