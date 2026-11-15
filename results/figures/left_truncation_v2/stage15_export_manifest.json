@@ -1,0 +1,22 @@
+{
+  "files_sha256": {
+    "fig_cm_e1_indobertweet.png": "d028a63807859b5adf45ba94ee80d5d7ff76db281fb991a0c32aa6cc2dfacd8c",
+    "fig_cm_e1_xlmr.png": "e1833fd0b9736721c6177289a6740ff990e6bfa6defd648a7bdaf44d70080ea6",
+    "fig_cm_e2_selected_c0.png": "3d108e17c8576e1419b94b885ba6a85b71df7e7cf2fa096c4841eb3a65915578",
+    "fig_cm_e2_selected_c_best.png": "bc45891cc0cb9ab8410322c445f7c5994ad011f8dab6319672ef27415549cd6c",
+    "fig_cm_e2b_shallow_c0.png": "12c99d0103ef76f86e5a38a3510ab8c7c558604011c12c564cbe7a0597fded0d",
+    "fig_cm_e2b_shallow_cbest_eligible.png": "224bcfbe72b019ad1bb9e2c48f42d7860ff2adf80f7175b164b743da3eb02d44",
+    "fig_cm_e3_direct_c0.png": "9c388eb9a2eec6e1432e50da1a8fcd3756635fe7a354645b6f47cf7f4facc7fd",
+    "fig_cm_e3_direct_c_best.png": "7c9efb7bbce45a8bbf1a6dee24ee545d7184e3cf47ccb395b1277bed770d6ab3",
+    "fig_e1_backbone_macro_f1.png": "7c7aa9162ea472af19d73ed44ab4e50d16cf9fe1846a2956dd464e76218c3d3f",
+    "fig_e2_context_depth_macro_f1.png": "7089cb7a3885e1f6e12503531d495a08cdcad8090b123fa4168de2335ce64d1f",
+    "fig_e2_per_class_f1.png": "18dafc9fb3a06ad4e1b8e54d5cb4ec39a96d021586f8193c51b98780ec4f3b84",
+    "fig_e2b_shallow_generalization.png": "79fa30dce9741e43c04cb102c0c4665cc71bdf7a338d5c6566261001978edae3",
+    "fig_training_strategy_comparison.png": "3e4ca5aeee143fd059ca1e8ca5a848fa7539f9a7e0eca6ddb35fa2e933404f25"
+  },
+  "run_id": "left_truncation_v2",
+  "schema_version": "thesis-run-config-v3",
+  "script_name": "scripts/15_evaluate_all.py",
+  "stage": 15,
+  "stage15_manifest_fingerprint": "3ada53b5e979c232c002b47fa9706a5b7e0c3147c380c449b35e91d17ddaa301"
+}

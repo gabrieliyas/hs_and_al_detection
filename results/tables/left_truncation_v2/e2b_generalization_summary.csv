@@ -1,0 +1,6 @@
+backbone,context_size,status,population_rule,n_examples,accuracy,macro_f1,weighted_f1,is_c_best
+indobertweet,0,evaluated,all shallow posts,900,0.8377777777777777,0.8381102443127869,0.838110244312787,False
+indobertweet,1,evaluated,all shallow posts,900,0.8233333333333334,0.8232059159821361,0.8232059159821362,True
+indobertweet,2,evaluated,available parents >= 2,750,0.7946666666666666,0.7949661799090993,0.7949661799090993,False
+indobertweet,3,evaluated,available parents >= 3,450,0.8577777777777778,0.8582808045725686,0.8582808045725686,False
+indobertweet,4,not_applicable,not applicable: shallow pool has no four-parent examples,0,,,,False

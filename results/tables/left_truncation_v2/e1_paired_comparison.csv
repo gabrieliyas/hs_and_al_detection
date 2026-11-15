@@ -1,0 +1,5 @@
+comparison,metric,observed_difference,ci_lower,ci_upper,ci_level,n_bootstrap,inferential_status
+XLM-R minus IndoBERTweet,macro_f1,-0.0228236095627845,-0.0434600228229944,-0.0019047775348721,95.0,10000,primary
+XLM-R minus IndoBERTweet,f1_N,-0.0229737168019815,-0.037028253787459,-0.0092095253986848,95.0,10000,descriptive_unadjusted
+XLM-R minus IndoBERTweet,f1_AL,-0.0229310060216318,-0.0685051366044556,0.0218489908588818,95.0,10000,descriptive_unadjusted
+XLM-R minus IndoBERTweet,f1_HS,-0.02256610586474,-0.0401365337520483,-0.0054681143860409,95.0,10000,descriptive_unadjusted

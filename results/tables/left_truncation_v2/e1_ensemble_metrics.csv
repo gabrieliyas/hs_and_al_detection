@@ -1,0 +1,3 @@
+backbone,experiment_id,n_examples,accuracy,macro_f1,weighted_f1
+indobertweet,E1-IndoBERTweet-Target,1910,0.8696335078534031,0.8344639723801328,0.8696700595966081
+xlmr,E1-XLMR-Target,1910,0.8445026178010471,0.8116403628173483,0.8468739407582413

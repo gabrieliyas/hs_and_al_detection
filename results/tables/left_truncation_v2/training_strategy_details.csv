@@ -1,0 +1,3 @@
+deployment_mode,backbone,context_size,n_oof_examples,itft_macro_f1,direct_macro_f1,difference_itft_minus_direct,ci_lower,ci_upper,ci_level,n_bootstrap,selected_strategy,reason,rule_version,same_condition_as_target_only
+target_only,indobertweet,0,900,0.8845289517390277,0.9001810842486176,-0.015652132509589967,-0.03251646812885594,0.0012369323189329927,95.0,10000,direct,no_credible_difference_default,v3-paired-context-and-latency-gate,True
+context_aware,indobertweet,1,900,0.900004402110078,0.8989096661512596,0.0010947359588184824,-0.01643249111222416,0.01830049892746154,95.0,10000,direct,no_credible_difference_default,v3-paired-context-and-latency-gate,False

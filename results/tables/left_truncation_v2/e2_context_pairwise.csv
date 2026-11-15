@@ -1,0 +1,7 @@
+backbone,provisional_top_context,candidate_context,comparison,observed_f1_difference_top_minus_candidate,ci_lower,ci_upper,ci_level,n_bootstrap,ci_includes_zero,selected_context,selection_reason,role
+indobertweet,2,0,C2_minus_C0,0.029831811330821356,0.010152824750032069,0.04986439345795475,95.0,10000,False,1,tradeoff_C1_CI_includes_zero_vs_C2,predeclared_context_selection_comparison
+indobertweet,2,1,C2_minus_C1,0.014356360959770997,-0.00012327159255147988,0.028915489735218652,95.0,10000,True,1,tradeoff_C1_CI_includes_zero_vs_C2,predeclared_context_selection_comparison
+xlmr,4,0,C4_minus_C0,0.04027797064972827,0.01924078851785444,0.06275784395256505,95.0,10000,False,2,tradeoff_C2_CI_includes_zero_vs_C4,predeclared_context_selection_comparison
+xlmr,4,1,C4_minus_C1,0.016792822492698423,-0.0017237192936360472,0.03525569767179844,95.0,10000,True,2,tradeoff_C2_CI_includes_zero_vs_C4,predeclared_context_selection_comparison
+xlmr,4,2,C4_minus_C2,0.0011493221644175433,-0.013847372346121106,0.016713299516688807,95.0,10000,True,2,tradeoff_C2_CI_includes_zero_vs_C4,predeclared_context_selection_comparison
+xlmr,4,3,C4_minus_C3,0.004480865553959101,-0.00952819414448336,0.01811476795699219,95.0,10000,True,2,tradeoff_C2_CI_includes_zero_vs_C4,predeclared_context_selection_comparison

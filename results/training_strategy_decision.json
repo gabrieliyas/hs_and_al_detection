@@ -1,0 +1,49 @@
+{
+  "by_mode": {
+    "context_aware": {
+      "bootstrap": {
+        "ci_level": 95.0,
+        "ci_lower": -0.01643249111222416,
+        "ci_upper": 0.01830049892746154,
+        "n_bootstrap": 10000,
+        "observed_diff": 0.0010947359588184824,
+        "significant": false
+      },
+      "difference": "itft minus direct",
+      "n_oof_examples": 900,
+      "post_id_sha256": "5d31ac867f84b7a612e318eb72bbcf7d4ddac35297ada9b6709178b847ed5ea6",
+      "reason": "no_credible_difference_default",
+      "rule_version": "v3-paired-context-and-latency-gate",
+      "run_id": "left_truncation_v2",
+      "schema_version": "thesis-run-config-v3",
+      "strategy": "direct"
+    },
+    "target_only": {
+      "bootstrap": {
+        "ci_level": 95.0,
+        "ci_lower": -0.03251646812885594,
+        "ci_upper": 0.0012369323189329927,
+        "n_bootstrap": 10000,
+        "observed_diff": -0.015652132509589967,
+        "significant": false
+      },
+      "difference": "itft minus direct",
+      "n_oof_examples": 900,
+      "post_id_sha256": "5d31ac867f84b7a612e318eb72bbcf7d4ddac35297ada9b6709178b847ed5ea6",
+      "reason": "no_credible_difference_default",
+      "rule_version": "v3-paired-context-and-latency-gate",
+      "run_id": "left_truncation_v2",
+      "schema_version": "thesis-run-config-v3",
+      "strategy": "direct"
+    }
+  },
+  "provenance": {
+    "stage11_manifest_fingerprint": "1e59d379424e20d06577b62fce711e0c7b199e0e22fea0c8d84bd27bbd862899",
+    "stage15_manifest_fingerprint": "3ada53b5e979c232c002b47fa9706a5b7e0c3147c380c449b35e91d17ddaa301",
+    "stage15_output_dir": "results/runs/left_truncation_v2/stage_15",
+    "strategy_input_post_id_sha256": "5d31ac867f84b7a612e318eb72bbcf7d4ddac35297ada9b6709178b847ed5ea6"
+  },
+  "rule_version": "v3-paired-context-and-latency-gate",
+  "run_id": "left_truncation_v2",
+  "schema_version": "thesis-run-config-v3"
+}

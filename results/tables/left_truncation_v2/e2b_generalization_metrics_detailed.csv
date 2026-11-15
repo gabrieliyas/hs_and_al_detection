@@ -1,0 +1,6 @@
+analysis,backbone,experiment_id,context_size,n_examples,accuracy,macro_precision,macro_recall,macro_f1,weighted_precision,weighted_recall,weighted_f1,population_rule,status,is_c_best
+E2B_shallow,indobertweet,E2-IndoBERTweet-ITFT-C0,0,900,0.8377777777777777,0.839776742845335,0.8377777777777778,0.8381102443127869,0.8397767428453349,0.8377777777777777,0.838110244312787,all shallow posts,evaluated,False
+E2B_shallow,indobertweet,E2-IndoBERTweet-ITFT-C1,1,900,0.8233333333333334,0.8262499629164483,0.8233333333333333,0.8232059159821361,0.8262499629164484,0.8233333333333334,0.8232059159821362,all shallow posts,evaluated,True
+E2B_shallow,indobertweet,E2-IndoBERTweet-ITFT-C2,2,750,0.7946666666666666,0.7975656923653106,0.7946666666666666,0.7949661799090993,0.7975656923653108,0.7946666666666666,0.7949661799090993,available parents >= 2,evaluated,False
+E2B_shallow,indobertweet,E2-IndoBERTweet-ITFT-C3,3,450,0.8577777777777778,0.863915462143248,0.8577777777777778,0.8582808045725686,0.8639154621432479,0.8577777777777778,0.8582808045725686,available parents >= 3,evaluated,False
+E2B_shallow,indobertweet,E2-IndoBERTweet-ITFT-C4,4,0,,,,,,,,not applicable: shallow pool has no four-parent examples,not_applicable,False
